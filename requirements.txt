@@ -1,0 +1,8 @@
+fastmcp
+langgraph
+langchain-mcp-adapters
+langchain-openai
+langchain-google-genai
+sentence-transformers
+chromadb
+httpx
