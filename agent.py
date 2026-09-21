@@ -1,7 +1,6 @@
 import os
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 import asyncio
 
@@ -28,23 +27,12 @@ async def main():
     print(f"Loaded {len(tools)} tools from MCPs.")
 
     # 2. Initialize the LLM
-    # The user settings indicate Gemini 3.1 Pro (Low) is the preferred model.
-    google_api_key = os.getenv("GOOGLE_API_KEY")
-    
-    if google_api_key:
-        print("Using Google Gemini model...")
-        model = ChatGoogleGenerativeAI(
-            model="gemini-1.5-pro", # Using 1.5-pro as standard stable representation for Gemini Pro
-            google_api_key=google_api_key,
-        )
-    else:
-        # Fallback to Grok if explicitly configured
-        print("Google API Key not found, falling back to Grok (OpenRouter)...")
-        model = ChatOpenAI(
-            model="x-ai/grok-4-fast:free",
-            base_url="https://openrouter.ai/api/v1",
-            api_key=os.getenv("OPENROUTER_API_KEY", "dummy"), 
-        )
+    print("Initializing Grok model (x-ai/grok-4-fast:free)...")
+    model = ChatOpenAI(
+        model="x-ai/grok-4-fast:free",
+        base_url="https://openrouter.ai/api/v1",
+        api_key=os.getenv("OPENROUTER_API_KEY", "dummy"), 
+    )
 
     # 3. Create the React Agent
     agent = create_react_agent(model, tools)
