@@ -57,7 +57,7 @@ async def chat_endpoint(request: Request):
         source_badge = None
         for msg in messages:
             if msg.type == "tool":
-                if msg.name in ["query_database", "list_tables", "describe_table"]:
+                if msg.name in ["query", "list_tables", "describe_table"]:
                     source_badge = {
                         "type": "db",
                         "label": "Postgres (Supabase)",
