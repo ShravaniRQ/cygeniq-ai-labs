@@ -1,13 +1,14 @@
-fastmcp
+# Core LangGraph agent
 langgraph
 langchain-mcp-adapters==0.1.10
 mcp>=1.6.0,<2.0.0
 langchain-openai
-langchain-google-genai
-sentence-transformers
-chromadb
-httpx
+
+# Web server
 fastapi
 uvicorn
+
+# Utilities
+httpx
 python-dotenv
 markdown
