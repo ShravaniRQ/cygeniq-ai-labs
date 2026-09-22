@@ -50,12 +50,18 @@ async def init_agent():
         print(f"Failed to connect to MCP servers. Ensure Node.js is installed. Error: {e}")
         return
 
+    api_key = (os.getenv("OPENROUTER_API_KEY") or "").strip()
+    if not api_key:
+        print("ERROR: OPENROUTER_API_KEY environment variable is missing or empty.")
+        return None
+
     print("\nInitializing Grok model (x-ai/grok-4.3)...")
     model = ChatOpenAI(
         model="x-ai/grok-4.3",
         base_url="https://openrouter.ai/api/v1",
-        api_key=os.getenv("OPENROUTER_API_KEY"),
-        max_tokens=1024,
+        api_key=api_key,
+        default_headers={"Authorization": f"Bearer {api_key}"},
+        max_tokens=512,
     )
 
     system_message = SystemMessage(content="""You are an internal AI assistant for Cygeniq AI Labs.
