@@ -55,7 +55,7 @@ async def init_agent():
         model="x-ai/grok-4.3",
         base_url="https://openrouter.ai/api/v1",
         api_key=os.getenv("OPENROUTER_API_KEY"),
-        max_tokens=4096,
+        max_tokens=1024,
     )
 
     system_message = SystemMessage(content="""You are an internal AI assistant for Cygeniq AI Labs.
