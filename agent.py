@@ -11,12 +11,13 @@ import logging
 # Suppress debug logs for cleaner terminal output
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-async def main():
+async def init_agent():
     print("Connecting to official MCP servers via npx...")
     
     # Check for required API key
     if not os.getenv("OPENROUTER_API_KEY"):
         print("ERROR: OPENROUTER_API_KEY environment variable is not set.")
+        return None
         print("Please configure your .env file.")
         return
 
@@ -67,26 +68,4 @@ You have access to the following tools — ALWAYS use them to answer questions:
 IMPORTANT: Employee/risk data = Postgres tools. Policy documents = Filesystem tools (in the 'policies' folder). Always try the correct tool before saying data is unavailable.""")
 
     agent = create_react_agent(model, tools, prompt=system_message)
-    print("\n=== Cygeniq AI Agent Ready ===")
-    print("Type 'exit' or 'quit' to stop.\n")
-
-    # Interactive Chat Loop
-    while True:
-        try:
-            user_input = input("You: ")
-            if user_input.lower() in ["exit", "quit"]:
-                break
-            if not user_input.strip():
-                continue
-            
-            # Note: We are not preserving message history in this simple loop yet, 
-            # but the Memory MCP handles persistent long-term storage!
-            response = await agent.ainvoke({
-                "messages": [{"role": "user", "content": user_input}]
-            })
-            print(f"\nAgent: {response['messages'][-1].content}\n")
-        except Exception as e:
-            print(f"\nError processing query: {e}\n")
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    return agent
