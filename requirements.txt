@@ -6,3 +6,6 @@ langchain-google-genai
 sentence-transformers
 chromadb
 httpx
+fastapi
+uvicorn
+markdown
