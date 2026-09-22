@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: cygeniq-agent
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false   # You will paste this in the Render dashboard
+      - key: SUPABASE_URL
+        sync: false   # You will paste this in the Render dashboard
+    healthCheckPath: /
