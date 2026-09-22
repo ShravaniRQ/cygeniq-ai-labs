@@ -1,6 +1,7 @@
 fastmcp
 langgraph
-langchain-mcp-adapters
+langchain-mcp-adapters==0.1.10
+mcp>=1.6.0,<2.0.0
 langchain-openai
 langchain-google-genai
 sentence-transformers
@@ -8,4 +9,5 @@ chromadb
 httpx
 fastapi
 uvicorn
+python-dotenv
 markdown
