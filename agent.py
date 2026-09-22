@@ -74,11 +74,12 @@ async def init_agent():
 - Use for: employees, risk levels, headcount, roles, any structured records
 - Database schema:
   Table: employees
-  Columns: id (integer), name (text), role (text), risk_level (text)
-  Valid risk_level values: 'Low', 'Medium', 'High'
-- Example SQL: `SELECT * FROM employees WHERE risk_level = 'High'`
-- Example SQL: `SELECT COUNT(*) FROM employees`
-- Example SQL: `SELECT name, role FROM employees WHERE risk_level = 'High'`
+  Columns: id (integer), name (text), department (text), role (text), hire_date (date), risk_level (text)
+  Valid risk_level values: 'high', 'medium', 'low'  ← NOTE: all lowercase in the database
+- Example SQL: `SELECT * FROM employees WHERE risk_level = 'high'`
+- Example SQL: `SELECT COUNT(*) FROM employees WHERE risk_level = 'high'`
+- Example SQL: `SELECT name, role FROM employees WHERE risk_level = 'high'`
+- If unsure of case, use: `SELECT * FROM employees WHERE LOWER(risk_level) = 'high'`
 
 ### Filesystem (Filesystem MCP)
 - Use for: HR policies, data retention rules, security guidelines, any document questions
