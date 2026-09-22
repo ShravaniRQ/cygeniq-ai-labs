@@ -1,0 +1,23 @@
+# Never upload secrets to the server build context
+.env
+.env.*
+
+# Git files not needed in Docker image
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# VS Code
+.vscode/
+
+# Local node_modules if any
+node_modules/
+
+# Scratch/temp files
+*.log
