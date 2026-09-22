@@ -430,7 +430,11 @@
       
       const answer = await response.json();
       typingEl.remove();
-      addAgentRow(answer);
+      if (!response.ok || answer.error) {
+        addAgentRow({ blocks: [`<p>Error from backend: ${escapeHtml(answer.error || 'Server error (' + response.status + ')')}</p>`], source: null });
+      } else {
+        addAgentRow(answer);
+      }
     } catch (e) {
       console.error(e);
       typingEl.remove();
