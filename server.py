@@ -41,6 +41,26 @@ async def chat_endpoint(request: Request):
     if not user_input:
         return JSONResponse(status_code=400, content={"error": "No message provided"})
 
+    if user_input.strip().lower() in ["status", "/status"]:
+        dashboard = """```text
+╔══════════════════════════════════════════════╗
+║          CYGENIQ AI LABS AGENT               ║
+╠══════════════════════════════════════════════╣
+║ LLM              Grok 4.3                    ║
+║ Framework        LangGraph                   ║
+║ MCP Servers      3                           ║
+║ Tools Available  24                          ║
+║ Database         Supabase/Postgres           ║
+║ Documents        Policies                    ║
+║ Memory           Persistent                  ║
+║ Status           ● Connected                 ║
+╚══════════════════════════════════════════════╝
+```"""
+        return {
+            "blocks": [markdown.markdown(dashboard)],
+            "source": None
+        }
+
     try:
         # We pass a thread_id via config to enable memory (checkpointing)
         config = {"configurable": {"thread_id": session_id}}
@@ -65,11 +85,19 @@ async def chat_endpoint(request: Request):
                         "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
                     }
                     break
-                elif msg.name in ["read_file", "list_directory"]:
+                elif msg.name in ["read_file", "list_directory", "list_allowed_directories"]:
                     source_badge = {
                         "type": "file",
                         "label": "Filesystem (Policies)",
                         "drawerTitle": "Policy Document",
+                        "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
+                    }
+                    break
+                elif msg.name in ["read_graph", "create_entities", "create_relations", "add_observations", "delete_entities", "delete_observations", "delete_relations", "search_nodes", "open_nodes"]:
+                    source_badge = {
+                        "type": "memory",
+                        "label": "Memory (Knowledge Graph)",
+                        "drawerTitle": "Persistent Memory",
                         "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
                     }
                     break

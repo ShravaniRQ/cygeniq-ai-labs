@@ -4,6 +4,7 @@ load_dotenv()  # Load .env file automatically
 import asyncio
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage
 import logging
@@ -89,16 +90,18 @@ async def init_agent():
 
 ### Filesystem (Filesystem MCP)
 - Use for: HR policies, data retention rules, security guidelines, any document questions
-- Policy files are in the 'policies/' directory
-- First call list_directory on 'policies', then read_file for the specific file
+- Policy files are in the 'knowledge/policies/' directory, and other knowledge bases are in the 'knowledge/' directory.
+- First call list_directory on the appropriate folder in 'knowledge/', then read_file for the specific file
 
 ### Memory (Memory MCP)
 - Use for: storing or recalling facts mentioned in past conversations
+- To remember a fact for later, use `create_entities` to store it in the knowledge graph.
+- To recall a fact from memory, use `read_graph` or `search_nodes` to retrieve it.
 
 ## FORBIDDEN
 - Do NOT say "there are no employees" or "no data available" without first running a SQL query
 - Do NOT answer employee questions from your training knowledge
 - Do NOT skip tool use for any factual question""")
 
-    agent = create_react_agent(model, tools, prompt=system_message)
+    agent = create_react_agent(model, tools, prompt=system_message, checkpointer=MemorySaver())
     return agent
