@@ -22,7 +22,7 @@ RUN npx -y @modelcontextprotocol/server-memory --help || true
 # Copy the rest of the application code
 COPY agent.py server.py ./
 COPY static/ ./static/
-COPY policies/ ./policies/
+COPY knowledge/ ./knowledge/
 
 # Expose the port Uvicorn will run on
 EXPOSE 8000
