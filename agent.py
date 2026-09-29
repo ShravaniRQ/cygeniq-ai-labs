@@ -56,9 +56,9 @@ async def init_agent():
         print("ERROR: GROQ_API_KEY environment variable is missing or empty.")
         return None
 
-    print("\nInitializing model on Groq (mixtral-8x7b-32768)...")
+    print("\nInitializing model on Groq (openai/gpt-oss-120b)...")
     model = ChatOpenAI(
-        model="mixtral-8x7b-32768",
+        model="openai/gpt-oss-120b",
         base_url="https://api.groq.com/openai/v1",
         api_key=api_key,
         max_tokens=512,
