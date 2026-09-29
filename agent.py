@@ -16,8 +16,8 @@ async def init_agent():
     print("Connecting to official MCP servers via npx...")
     
     # Check for required API key
-    if not os.getenv("OPENROUTER_API_KEY"):
-        print("ERROR: OPENROUTER_API_KEY environment variable is not set.")
+    if not os.getenv("GROQ_API_KEY"):
+        print("ERROR: GROQ_API_KEY environment variable is not set.")
         return None
         print("Please configure your .env file.")
         return
@@ -51,17 +51,16 @@ async def init_agent():
         print(f"Failed to connect to MCP servers. Ensure Node.js is installed. Error: {e}")
         return
 
-    api_key = (os.getenv("OPENROUTER_API_KEY") or "").strip()
+    api_key = (os.getenv("GROQ_API_KEY") or "").strip()
     if not api_key:
-        print("ERROR: OPENROUTER_API_KEY environment variable is missing or empty.")
+        print("ERROR: GROQ_API_KEY environment variable is missing or empty.")
         return None
 
-    print("\nInitializing Grok model (x-ai/grok-4.3)...")
+    print("\nInitializing Llama model on Groq (llama-3.3-70b-versatile)...")
     model = ChatOpenAI(
-        model="x-ai/grok-4.3",
-        base_url="https://openrouter.ai/api/v1",
+        model="llama-3.3-70b-versatile",
+        base_url="https://api.groq.com/openai/v1",
         api_key=api_key,
-        default_headers={"Authorization": f"Bearer {api_key}"},
         max_tokens=512,
     )
 
