@@ -56,9 +56,9 @@ async def init_agent():
         print("ERROR: GROQ_API_KEY environment variable is missing or empty.")
         return None
 
-    print("\nInitializing Llama model on Groq (llama-3.1-70b-versatile)...")
+    print("\nInitializing Llama model on Groq (llama3-70b-8192)...")
     model = ChatOpenAI(
-        model="llama-3.1-70b-versatile",
+        model="llama3-70b-8192",
         base_url="https://api.groq.com/openai/v1",
         api_key=api_key,
         max_tokens=512,
