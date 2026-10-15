@@ -41,6 +41,9 @@ async def chat_endpoint(request: Request):
     if not user_input:
         return JSONResponse(status_code=400, content={"error": "No message provided"})
 
+    if len(user_input) > 10000:
+        return JSONResponse(status_code=413, content={"error": "Message exceeds maximum allowed length of 10,000 characters."})
+
     if user_input.strip().lower() in ["status", "/status"]:
         dashboard = """```text
 ╔══════════════════════════════════════════════╗
@@ -101,11 +104,35 @@ async def chat_endpoint(request: Request):
                         "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
                     }
                     break
-                elif msg.name in ["search_sharepoint", "read_sharepoint_document", "list_knowledge_areas"]:
+                elif msg.name in ["search_sharepoint", "read_sharepoint_document", "list_knowledge_areas", "upload_sharepoint_document"]:
                     source_badge = {
                         "type": "sharepoint",
                         "label": "SharePoint (Knowledge)",
                         "drawerTitle": "SharePoint Document",
+                        "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
+                    }
+                    break
+                elif msg.name in ["search_policies", "get_policy_details", "list_available_policies", "check_compliance_requirement"]:
+                    source_badge = {
+                        "type": "policy",
+                        "label": "Policy Intelligence",
+                        "drawerTitle": "Policy Document",
+                        "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
+                    }
+                    break
+                elif msg.name in ["list_products", "get_product_datasheet", "search_product_capabilities", "match_rfp_requirement_to_features"]:
+                    source_badge = {
+                        "type": "product",
+                        "label": "Product Intelligence",
+                        "drawerTitle": "Cygeniq Product Intelligence",
+                        "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
+                    }
+                    break
+                elif msg.name in ["list_regulatory_frameworks", "get_framework_controls", "map_control_to_product_evidence", "evaluate_compliance_gap", "generate_compliance_checklist"]:
+                    source_badge = {
+                        "type": "grc",
+                        "label": "GRC & Regulatory Intelligence",
+                        "drawerTitle": "Regulatory Compliance Standard",
                         "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
                     }
                     break
