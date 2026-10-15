@@ -14,15 +14,18 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install additional deps needed by sharepoint_mcp.py
+RUN pip install --no-cache-dir msal python-docx
+
 # Pre-install the npx MCP packages so they don't need to download at runtime
 RUN npx -y @modelcontextprotocol/server-filesystem --help || true
 RUN npx -y @modelcontextprotocol/server-postgres --help || true
 RUN npx -y @modelcontextprotocol/server-memory --help || true
 
 # Copy the rest of the application code
-COPY agent.py server.py ./
+COPY agent.py server.py sharepoint_mcp.py ./
 COPY static/ ./static/
-COPY policies/ ./policies/
+COPY knowledge/ ./knowledge/
 
 # Expose the port Uvicorn will run on
 EXPOSE 8000

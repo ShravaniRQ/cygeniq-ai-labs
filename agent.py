@@ -4,21 +4,22 @@ load_dotenv()  # Load .env file automatically
 import asyncio
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage
 import logging
+import aiosqlite
 
 # Suppress debug logs for cleaner terminal output
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-async def main():
+async def init_agent():
     print("Connecting to official MCP servers via npx...")
     
     # Check for required API key
-    if not os.getenv("OPENROUTER_API_KEY"):
-        print("ERROR: OPENROUTER_API_KEY environment variable is not set.")
-        print("Please configure your .env file.")
-        return
+    if not os.getenv("GROQ_API_KEY"):
+        print("ERROR: GROQ_API_KEY environment variable is not set. Please configure your .env file.")
+        return None
 
     # Use a mock DB URL if none provided so the agent doesn't crash on boot,
     # though the Postgres MCP will throw connection errors if it tries to query it.
@@ -41,6 +42,11 @@ async def main():
                 "command": "npx",
                 "args": ["-y", "@modelcontextprotocol/server-memory"],
                 "transport": "stdio"
+            },
+            "sharepoint": {
+                "command": "python",
+                "args": ["sharepoint_mcp.py"],
+                "transport": "stdio"
             }
         })
         tools = await client.get_tools()
@@ -49,44 +55,61 @@ async def main():
         print(f"Failed to connect to MCP servers. Ensure Node.js is installed. Error: {e}")
         return
 
-    print("\nInitializing Grok model (x-ai/grok-4.3)...")
+    api_key = (os.getenv("GROQ_API_KEY") or "").strip()
+    if not api_key:
+        print("ERROR: GROQ_API_KEY environment variable is missing or empty.")
+        return None
+
+    print("\nInitializing model on Groq (openai/gpt-oss-120b)...")
     model = ChatOpenAI(
-        model="x-ai/grok-4.3",
-        base_url="https://openrouter.ai/api/v1",
-        api_key=os.getenv("OPENROUTER_API_KEY"),
-        max_tokens=4096,
+        model="openai/gpt-oss-120b",
+        base_url="https://api.groq.com/openai/v1",
+        api_key=api_key,
+        max_tokens=512,
     )
 
-    system_message = SystemMessage(content="""You are a helpful internal assistant for Cygeniq AI Labs.
-You have access to the following tools — ALWAYS use them to answer questions:
+    system_message = SystemMessage(content="""You are an internal AI assistant for Cygeniq AI Labs.
 
-1. **Postgres/Database tools**: Employee records are stored in a Postgres database. The table is called 'employees' with lowercase columns: name, role, risk_level. To query it, use SQL like: SELECT * FROM employees WHERE risk_level = 'High'. ALWAYS query the database for employee questions. Never use filesystem tools for employee data.
-2. **Filesystem tools**: Policy documents are stored in the 'policies' folder. To read HR or security policies, list files in the 'policies' directory first, then read the relevant file (e.g. read_file with path 'policies/hr_policy.md').
-3. **Memory tools**: Store and retrieve long-term facts across conversations.
+## CRITICAL RULES — READ BEFORE EVERY RESPONSE
 
-IMPORTANT: Employee/risk data = Postgres tools. Policy documents = Filesystem tools (in the 'policies' folder). Always try the correct tool before saying data is unavailable.""")
+**RULE 1: You MUST use a tool before answering any factual question. Never answer from memory or assumption.**
+**RULE 2: For ANY question about employees, risk levels, or records — you MUST call the Postgres 'query' tool first.**
+**RULE 3: For ANY question about policies, guidelines, or documents — you MUST call a Filesystem tool first.**
+**RULE 4: If you are unsure which tool to use, try the database first, then the filesystem.**
 
-    agent = create_react_agent(model, tools, prompt=system_message)
-    print("\n=== Cygeniq AI Agent Ready ===")
-    print("Type 'exit' or 'quit' to stop.\n")
+## Available Tools and When to Use Them
 
-    # Interactive Chat Loop
-    while True:
-        try:
-            user_input = input("You: ")
-            if user_input.lower() in ["exit", "quit"]:
-                break
-            if not user_input.strip():
-                continue
-            
-            # Note: We are not preserving message history in this simple loop yet, 
-            # but the Memory MCP handles persistent long-term storage!
-            response = await agent.ainvoke({
-                "messages": [{"role": "user", "content": user_input}]
-            })
-            print(f"\nAgent: {response['messages'][-1].content}\n")
-        except Exception as e:
-            print(f"\nError processing query: {e}\n")
+### Database (Postgres MCP)
+- Use tool: `query`
+- Use for: employees, risk levels, headcount, roles, any structured records
+- Database schema:
+  Table: employees
+  Columns: id (integer), name (text), department (text), role (text), hire_date (date), risk_level (text)
+  Valid risk_level values: 'high', 'medium', 'low'  ← NOTE: all lowercase in the database
+- Example SQL: `SELECT * FROM employees WHERE risk_level = 'high'`
+- Example SQL: `SELECT COUNT(*) FROM employees WHERE risk_level = 'high'`
+- Example SQL: `SELECT name, role FROM employees WHERE risk_level = 'high'`
+- If unsure of case, use: `SELECT * FROM employees WHERE LOWER(risk_level) = 'high'`
 
-if __name__ == "__main__":
-    asyncio.run(main())
+### Filesystem (Filesystem MCP)
+- Use for: HR policies, data retention rules, security guidelines, any document questions
+- Policy files are in the 'knowledge/policies/' directory, and other knowledge bases are in the 'knowledge/' directory.
+- First call list_directory on the appropriate folder in 'knowledge/', then read_file for the specific file
+
+### SharePoint (SharePoint MCP)
+- Use for: Products, RFPs, Presales, GRC, Research, and Corporate knowledge
+- It accesses a mock SharePoint database. First use `search_sharepoint` with keywords, then `read_sharepoint_document` for the specific file.
+- Use `list_knowledge_areas` to see top-level folders.
+
+### Memory (Memory MCP)
+- Use for: storing or recalling facts mentioned in past conversations
+- To remember a fact for later, use `create_entities` to store it in the knowledge graph.
+- To recall a fact from memory, use `read_graph` or `search_nodes` to retrieve it.
+
+## FORBIDDEN
+- Do NOT say "there are no employees" or "no data available" without first running a SQL query
+- Do NOT answer employee questions from your training knowledge
+- Do NOT skip tool use for any factual question""")
+
+    agent = create_react_agent(model, tools, prompt=system_message, checkpointer=AsyncSqliteSaver(await aiosqlite.connect("cygeniq_memory.db")))
+    return agent

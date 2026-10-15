@@ -5,8 +5,14 @@ services:
     dockerfilePath: ./Dockerfile
     plan: free
     envVars:
-      - key: OPENROUTER_API_KEY
-        sync: false   # You will paste this in the Render dashboard
+      - key: GROQ_API_KEY
+        sync: false   # Groq API key — paste in the Render dashboard
       - key: SUPABASE_URL
-        sync: false   # You will paste this in the Render dashboard
+        sync: false   # postgresql://... connection string from Supabase
+      - key: AZURE_TENANT_ID
+        sync: false   # Azure AD Tenant ID for SharePoint MCP
+      - key: AZURE_CLIENT_ID
+        sync: false   # Azure App Registration Client ID
+      - key: AZURE_CLIENT_SECRET
+        sync: false   # Azure App Registration Client Secret
     healthCheckPath: /

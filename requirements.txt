@@ -1,8 +1,20 @@
-fastmcp
+# Core LangGraph agent
 langgraph
-langchain-mcp-adapters
+langgraph-checkpoint-sqlite
+aiosqlite
+langchain-mcp-adapters==0.1.10
+mcp>=1.6.0,<2.0.0
 langchain-openai
-langchain-google-genai
-sentence-transformers
-chromadb
+
+# Web server
+fastapi
+uvicorn
+
+# SharePoint MCP
+msal
+python-docx
+
+# Utilities
 httpx
+python-dotenv
+markdown
