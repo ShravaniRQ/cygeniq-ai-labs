@@ -18,3 +18,12 @@ qdrant_storage/
 # IDE files
 .vscode/
 .idea/
+
+# Local database / Memory checkpoints
+*.db
+cygeniq_memory.db
+
+# Dummy / mock data
+dummy_sharepoint_docs/
+dummy_sharepoint_docs_docx/
+image.png

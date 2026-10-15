@@ -101,6 +101,14 @@ async def chat_endpoint(request: Request):
                         "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
                     }
                     break
+                elif msg.name in ["search_sharepoint", "read_sharepoint_document", "list_knowledge_areas"]:
+                    source_badge = {
+                        "type": "sharepoint",
+                        "label": "SharePoint (Knowledge)",
+                        "drawerTitle": "SharePoint Document",
+                        "drawerBody": f"<h4>Tool Used</h4><pre>{msg.name}</pre><h4>Result Snippet</h4><div class='excerpt'>{msg.content[:300]}...</div>"
+                    }
+                    break
 
         # Convert markdown text to HTML
         html_message = markdown.markdown(final_message)

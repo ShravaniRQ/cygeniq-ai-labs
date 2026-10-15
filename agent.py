@@ -4,10 +4,11 @@ load_dotenv()  # Load .env file automatically
 import asyncio
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage
 import logging
+import aiosqlite
 
 # Suppress debug logs for cleaner terminal output
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -17,10 +18,8 @@ async def init_agent():
     
     # Check for required API key
     if not os.getenv("GROQ_API_KEY"):
-        print("ERROR: GROQ_API_KEY environment variable is not set.")
+        print("ERROR: GROQ_API_KEY environment variable is not set. Please configure your .env file.")
         return None
-        print("Please configure your .env file.")
-        return
 
     # Use a mock DB URL if none provided so the agent doesn't crash on boot,
     # though the Postgres MCP will throw connection errors if it tries to query it.
@@ -42,6 +41,11 @@ async def init_agent():
             "memory": {
                 "command": "npx",
                 "args": ["-y", "@modelcontextprotocol/server-memory"],
+                "transport": "stdio"
+            },
+            "sharepoint": {
+                "command": "python",
+                "args": ["sharepoint_mcp.py"],
                 "transport": "stdio"
             }
         })
@@ -92,6 +96,11 @@ async def init_agent():
 - Policy files are in the 'knowledge/policies/' directory, and other knowledge bases are in the 'knowledge/' directory.
 - First call list_directory on the appropriate folder in 'knowledge/', then read_file for the specific file
 
+### SharePoint (SharePoint MCP)
+- Use for: Products, RFPs, Presales, GRC, Research, and Corporate knowledge
+- It accesses a mock SharePoint database. First use `search_sharepoint` with keywords, then `read_sharepoint_document` for the specific file.
+- Use `list_knowledge_areas` to see top-level folders.
+
 ### Memory (Memory MCP)
 - Use for: storing or recalling facts mentioned in past conversations
 - To remember a fact for later, use `create_entities` to store it in the knowledge graph.
@@ -102,5 +111,5 @@ async def init_agent():
 - Do NOT answer employee questions from your training knowledge
 - Do NOT skip tool use for any factual question""")
 
-    agent = create_react_agent(model, tools, prompt=system_message, checkpointer=MemorySaver())
+    agent = create_react_agent(model, tools, prompt=system_message, checkpointer=AsyncSqliteSaver(await aiosqlite.connect("cygeniq_memory.db")))
     return agent
