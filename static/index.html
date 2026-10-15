@@ -218,18 +218,6 @@
     New chat
   </button>
 
-  <div class="rail-section-label">Try asking</div>
-  <div class="starters" id="starters">
-    <button class="chip" data-q="What is our data retention policy?">What is our data retention policy?</button>
-    <button class="chip" data-q="Which employees have a high risk level?">Which employees have a high risk level?</button>
-    <button class="chip" data-q="How many employees are in the database?">How many employees are in the database?</button>
-    <button class="chip" data-q="What are the password requirements?">What are the password requirements?</button>
-  </div>
-
-  <div class="rail-section-label">Recent</div>
-  <div class="history" id="history">
-    <div class="history-empty">Chats you start will appear here</div>
-  </div>
 
   <div class="rail-footer">
     <strong>Live interface.</strong> Connected to Cygeniq AI Agent via FastAPI.
@@ -345,14 +333,16 @@
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); trySend(); } });
   sendBtn.addEventListener('click', trySend);
 
-  starters.addEventListener('click', (e) => {
-    const btn = e.target.closest('.chip');
-    if (!btn) return;
-    input.value = btn.dataset.q;
-    sendBtn.disabled = false;
-    trySend();
-    if (window.innerWidth <= 760){ rail.classList.remove('open'); railScrim.classList.remove('open'); }
-  });
+  if (starters) {
+    starters.addEventListener('click', (e) => {
+      const btn = e.target.closest('.chip');
+      if (!btn) return;
+      input.value = btn.dataset.q;
+      sendBtn.disabled = false;
+      trySend();
+      if (window.innerWidth <= 760){ rail.classList.remove('open'); railScrim.classList.remove('open'); }
+    });
+  }
 
   newChatBtn.addEventListener('click', () => {
     saveCurrentSession();
@@ -384,6 +374,7 @@
   }
 
   function renderHistory(){
+    if (!historyEl) return;
     if (!sessions.length){
       historyEl.innerHTML = '<div class="history-empty">Chats you start will appear here</div>';
       return;
