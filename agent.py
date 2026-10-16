@@ -1,4 +1,5 @@
 import os
+import pathlib
 from dotenv import load_dotenv
 load_dotenv()  # Load .env file automatically
 import asyncio
@@ -12,6 +13,18 @@ import aiosqlite
 
 # Suppress debug logs for cleaner terminal output
 logging.getLogger("httpx").setLevel(logging.WARNING)
+
+# ---------------------------------------------------------------------------
+# Runtime metadata — populated by init_agent(), consumed by server.py
+# ---------------------------------------------------------------------------
+TOOL_COUNT: int = 0          # total tools loaded across all MCP servers
+MCP_SERVER_COUNT: int = 7    # number of MCP server definitions below
+LLM_MODEL: str = "openai/gpt-oss-120b (Groq)"
+
+# Persistent data directory: /app/data in Docker (volume), ./data locally
+DATA_DIR = pathlib.Path(os.getenv("DATA_DIR", "./data"))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+SQLITE_PATH = str(DATA_DIR / "cygeniq_memory.db")
 
 async def init_agent():
     print("Connecting to official MCP servers via npx...")
@@ -65,7 +78,9 @@ async def init_agent():
             }
         })
         tools = await client.get_tools()
-        print(f"Successfully connected! Loaded {len(tools)} tools.")
+        global TOOL_COUNT
+        TOOL_COUNT = len(tools)
+        print(f"Successfully connected! Loaded {TOOL_COUNT} tools.")
     except Exception as e:
         print(f"Failed to connect to MCP servers. Ensure Node.js is installed. Error: {e}")
         return
@@ -156,5 +171,10 @@ async def init_agent():
 - Do NOT answer policy questions without calling Policy MCP
 - Do NOT skip tool use for any factual question""")
 
-    agent = create_react_agent(model, tools, prompt=system_message, checkpointer=AsyncSqliteSaver(await aiosqlite.connect("cygeniq_memory.db")))
+    agent = create_react_agent(
+        model,
+        tools,
+        prompt=system_message,
+        checkpointer=AsyncSqliteSaver(await aiosqlite.connect(SQLITE_PATH))
+    )
     return agent

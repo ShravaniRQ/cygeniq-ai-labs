@@ -27,6 +27,15 @@ COPY agent.py server.py sharepoint_mcp.py policy_mcp.py product_mcp.py grc_mcp.p
 COPY static/ ./static/
 COPY knowledge/ ./knowledge/
 
+# Create and declare the persistent data directory.
+# Mount a named volume here in production to persist the SQLite memory DB
+# across container restarts and redeploys.
+#   docker run -v cygeniq_data:/app/data ...
+#   render.yaml: disk mount at /app/data
+RUN mkdir -p /app/data
+ENV DATA_DIR=/app/data
+VOLUME ["/app/data"]
+
 # Expose the port Uvicorn will run on
 EXPOSE 8000
 

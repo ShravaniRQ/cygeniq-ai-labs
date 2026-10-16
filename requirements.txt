@@ -10,6 +10,9 @@ langchain-openai
 fastapi
 uvicorn
 
+# Rate limiting
+slowapi
+
 # SharePoint MCP
 msal
 python-docx

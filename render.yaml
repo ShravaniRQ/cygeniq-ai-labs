@@ -7,12 +7,40 @@ services:
     envVars:
       - key: GROQ_API_KEY
         sync: false   # Groq API key — paste in the Render dashboard
+
       - key: SUPABASE_URL
         sync: false   # postgresql://... connection string from Supabase
+
       - key: AZURE_TENANT_ID
         sync: false   # Azure AD Tenant ID for SharePoint MCP
+
       - key: AZURE_CLIENT_ID
         sync: false   # Azure App Registration Client ID
+
       - key: AZURE_CLIENT_SECRET
         sync: false   # Azure App Registration Client Secret
-    healthCheckPath: /
+
+      # -----------------------------------------------------------------------
+      # Authentication: protect the /chat endpoint.
+      # When set, every request must include the header:  X-API-Key: <value>
+      # When left blank the server runs in dev mode (no auth).
+      # -----------------------------------------------------------------------
+      - key: CYGENIQ_API_KEY
+        sync: false   # Internal API key for /chat — leave blank for open dev access
+
+      # -----------------------------------------------------------------------
+      # Persistent memory storage.
+      # On Render free tier, use a Render Disk mounted at /app/data.
+      # -----------------------------------------------------------------------
+      - key: DATA_DIR
+        value: /app/data   # Must match the Render Disk mount path
+
+    # Health check used by Render to confirm the service is alive
+    healthCheckPath: /health
+
+    # Render Disk for persistent SQLite memory.
+    # Uncomment and configure when upgrading from the free plan.
+    # disk:
+    #   name: cygeniq-memory
+    #   mountPath: /app/data
+    #   sizeGB: 1

@@ -411,18 +411,25 @@
       if (!activeId) {
         activeId = 'c' + Date.now();
       }
+      // Include API key header if configured (read from page meta or window global)
+      const apiKey = window.__CYGENIQ_API_KEY__ || '';
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) headers['X-API-Key'] = apiKey;
+
       const response = await fetch('/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({ message: text, session_id: activeId })
       });
-      
+
       const answer = await response.json();
       typingEl.remove();
-      if (!response.ok || answer.error) {
-        addAgentRow({ blocks: [`<p>Error from backend: ${escapeHtml(answer.error || 'Server error (' + response.status + ')')}</p>`], source: null });
+      if (response.status === 429) {
+        addAgentRow({ blocks: ['<p>⚠️ Too many requests. Please wait a moment before sending another message.</p>'], sources: [], source: null });
+      } else if (response.status === 401) {
+        addAgentRow({ blocks: ['<p>🔒 Authentication required. Please contact your administrator.</p>'], sources: [], source: null });
+      } else if (!response.ok || answer.error) {
+        addAgentRow({ blocks: [`<p>Error from backend: ${escapeHtml(answer.error || 'Server error (' + response.status + ')')}</p>`], sources: [], source: null });
       } else {
         addAgentRow(answer);
       }
@@ -462,15 +469,20 @@
     meta.className = 'meta';
     meta.innerHTML = '<span>' + nowTime() + '</span>';
 
-    if (answer.source){
+    // Render ALL source badges (one per tool used in this response)
+    const sourcesArr = Array.isArray(answer.sources) && answer.sources.length
+      ? answer.sources
+      : (answer.source ? [answer.source] : []);  // backwards compat
+    sourcesArr.forEach(src => {
       const badge = document.createElement('button');
-      badge.className = 'source-badge' + (answer.source.type === 'db' ? ' db' : '');
-      badge.textContent = 'source: ' + answer.source.label;
+      badge.className = 'source-badge' + (src.type === 'db' ? ' db' : '');
+      badge.textContent = src.tool || src.label;
+      badge.title = src.label;
       badge.addEventListener('click', () => {
-        openDrawer(answer.source.drawerTitle, answer.source.label, answer.source.drawerBody);
+        openDrawer(src.drawerTitle, src.label, src.drawerBody);
       });
       meta.appendChild(badge);
-    }
+    });
 
     const actions = document.createElement('div');
     actions.className = 'msg-actions';
