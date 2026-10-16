@@ -21,6 +21,10 @@ TOOL_COUNT: int = 0          # total tools loaded across all MCP servers
 MCP_SERVER_COUNT: int = 7    # number of MCP server definitions below
 LLM_MODEL: str = "openai/gpt-oss-120b (Groq)"
 
+def get_tool_count() -> int:
+    """Return the live number of loaded MCP tools."""
+    return TOOL_COUNT
+
 # Persistent data directory: /app/data in Docker (volume), ./data locally
 DATA_DIR = pathlib.Path(os.getenv("DATA_DIR", "./data"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)

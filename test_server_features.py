@@ -109,27 +109,29 @@ def test_persistent_storage():
 def test_status_dashboard_accuracy():
     print("\n[TEST 4] Operational Accuracy of /status Dashboard:")
     import server
+    import agent
 
     # Dynamic counts from agent
-    assert server.MCP_SERVER_COUNT == 7, f"Expected 7 MCP servers, got {server.MCP_SERVER_COUNT}"
-    assert "Groq" in server.LLM_MODEL
+    assert agent.MCP_SERVER_COUNT == 7, f"Expected 7 MCP servers, got {agent.MCP_SERVER_COUNT}"
+    assert "Groq" in agent.LLM_MODEL
 
     # Verify that status shortcut uses dynamic variables
     auth_on = "ON  (X-API-Key)" if server._API_KEY else "OFF (dev mode) "
     assert auth_on in ("ON  (X-API-Key)", "OFF (dev mode) ")
-    print(f"  [PASS] Dynamic MCP Servers: {server.MCP_SERVER_COUNT}")
-    print(f"  [PASS] Dynamic LLM Model: {server.LLM_MODEL}")
-    print(f"  [PASS] Dynamic Tool Count tracking: {server.TOOL_COUNT}")
+    print(f"  [PASS] Dynamic MCP Servers: {agent.MCP_SERVER_COUNT}")
+    print(f"  [PASS] Dynamic LLM Model: {agent.LLM_MODEL}")
+    print(f"  [PASS] Dynamic Tool Count tracking: {agent.get_tool_count()}")
 
 
 def test_health_endpoint():
     print("\n[TEST 5] Deployment Health Endpoint (/health):")
     import asyncio
     import server
+    import agent
 
     # 1. Uninitialized state (before startup event completes)
     server.cygeniq_agent = None
-    server.TOOL_COUNT = 0
+    agent.TOOL_COUNT = 0
     health_pre = asyncio.run(server.health())
     assert health_pre["status"] == "ok"
     assert health_pre["agent_ready"] is False, "Before startup, agent_ready must be False"
@@ -138,7 +140,7 @@ def test_health_endpoint():
 
     # 2. Initialized state (simulating completed startup_event with connected tools)
     server.cygeniq_agent = MagicMock()
-    server.TOOL_COUNT = 38  # 7 MCP servers: 17 python + ~21 official npx
+    agent.TOOL_COUNT = 38  # 7 MCP servers: 17 python + ~21 official npx
     server._API_KEY = "prod-key-xyz"
     health_post = asyncio.run(server.health())
     assert health_post["agent_ready"] is True, "After startup, agent_ready must be True"
@@ -148,7 +150,7 @@ def test_health_endpoint():
 
     # Reset
     server.cygeniq_agent = None
-    server.TOOL_COUNT = 0
+    agent.TOOL_COUNT = 0
     server._API_KEY = ""
 
 

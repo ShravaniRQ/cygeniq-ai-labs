@@ -29,7 +29,8 @@ except ImportError:
             return decorator
     limiter = _DummyLimiter()
 
-from agent import init_agent, TOOL_COUNT, MCP_SERVER_COUNT, LLM_MODEL
+import agent
+from agent import init_agent
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -164,9 +165,9 @@ async def health():
     return {
         "status": "ok",
         "agent_ready": cygeniq_agent is not None,
-        "tool_count": TOOL_COUNT,
-        "mcp_servers": MCP_SERVER_COUNT,
-        "model": LLM_MODEL,
+        "tool_count": agent.get_tool_count(),
+        "mcp_servers": agent.MCP_SERVER_COUNT,
+        "model": agent.LLM_MODEL,
         "auth_enabled": bool(_API_KEY),
     }
 
@@ -207,14 +208,15 @@ async def chat_endpoint(request: Request):
     if user_input.strip().lower() in {"status", "/status"}:
         auth_line = "ON  (X-API-Key)" if _API_KEY else "OFF (dev mode) "
         rate_line  = "10 req/min/IP  "
+        tools_available = agent.get_tool_count()
         dashboard = f"""```text
 ╔══════════════════════════════════════════════════╗
 ║            CYGENIQ AI LABS AGENT                 ║
 ╠══════════════════════════════════════════════════╣
-║ LLM              {LLM_MODEL:<32}║
+║ LLM              {agent.LLM_MODEL:<32}║
 ║ Framework        LangGraph                       ║
-║ MCP Servers      {MCP_SERVER_COUNT:<32}║
-║ Tools Available  {TOOL_COUNT:<32}║
+║ MCP Servers      {agent.MCP_SERVER_COUNT:<32}║
+║ Tools Available  {tools_available:<32}║
 ║ Database         Supabase / PostgreSQL           ║
 ║ Memory           Persistent (SQLite)             ║
 ║ Authentication   {auth_line:<32}║
