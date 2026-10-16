@@ -100,10 +100,60 @@
   .row.user .bubble{background:var(--ink);color:var(--paper);border-radius:14px 14px 3px 14px;}
   .row.agent .bubble{background:var(--paper-raised);border:1px solid var(--line);border-left:3px solid var(--primary);
     border-radius:3px 10px 10px 10px;color:var(--ink);width:100%;}
-  .bubble p + p{margin-top:8px;}
-  .bubble strong{font-weight:600;}
-  .bubble ul{margin:6px 0 0 18px;}
-  .bubble li{margin-bottom:3px;}
+  .bubble p{margin-bottom:8px;line-height:1.65;}
+  .bubble p:last-child{margin-bottom:0;}
+  .bubble strong{font-weight:600;color:var(--ink);}
+  .bubble h1,.bubble h2,.bubble h3,.bubble h4{font-family:'Source Serif 4',serif;font-weight:600;color:var(--ink);margin:14px 0 6px;}
+  .bubble h1{font-size:18px;}
+  .bubble h2{font-size:16px;}
+  .bubble h3{font-size:14.5px;}
+  .bubble h4{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+  .bubble ul,.bubble ol{margin:8px 0 8px 20px;}
+  .bubble li{margin-bottom:4px;line-height:1.6;}
+  .bubble blockquote{border-left:3px solid var(--primary);background:color-mix(in srgb, var(--primary) 7%, transparent);
+    padding:8px 14px;border-radius:0 6px 6px 0;margin:10px 0;font-style:italic;color:var(--ink-soft);}
+  .bubble pre{background:color-mix(in srgb, var(--ink) 6%, var(--paper));border:1px solid var(--line);
+    border-radius:8px;padding:12px 14px;margin:10px 0;overflow-x:auto;font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;line-height:1.55;color:var(--ink);white-space:pre;max-width:100%;}
+  .bubble code{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  .bubble code:not(pre code){background:color-mix(in srgb, var(--primary) 12%, transparent);color:var(--primary-ink);
+    padding:2px 6px;border-radius:4px;font-size:12px;}
+  .bubble table{width:100%;border-collapse:separate;border-spacing:0;margin:12px 0;border:1px solid var(--line);
+    border-radius:8px;overflow:hidden;font-size:13px;}
+  .bubble th{background:color-mix(in srgb, var(--primary) 10%, var(--paper-raised));color:var(--ink);font-weight:600;
+    font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);}
+  .bubble td{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:top;}
+  .bubble tr:last-child td{border-bottom:none;}
+  .bubble tr:hover td{background:color-mix(in srgb, var(--primary) 4%, transparent);}
+
+  /* ---------- System Dashboard Card ---------- */
+  .system-dashboard-card{background:var(--paper-raised);border:1px solid var(--line);border-radius:10px;
+    padding:16px 18px;margin:4px 0;box-shadow:0 2px 8px rgba(0,0,0,0.03);}
+  .sdc-header{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;
+    margin-bottom:14px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap;}
+  .sdc-title-row{display:flex;align-items:center;gap:8px;}
+  .sdc-live-dot{width:8px;height:8px;border-radius:50%;background:#10B981;
+    box-shadow:0 0 0 3px rgba(16,185,129,0.25);animation:sdc-pulse 2s infinite ease-in-out;}
+  @keyframes sdc-pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .sdc-title{font-family:'Source Serif 4',serif;font-size:16px;font-weight:600;color:var(--ink);}
+  .sdc-badge.live{font-size:11px;font-weight:600;color:#047857;background:rgba(16,185,129,0.12);
+    padding:3px 9px;border-radius:100px;border:1px solid rgba(16,185,129,0.3);}
+  .sdc-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px 14px;margin-bottom:14px;}
+  .sdc-metric{display:flex;flex-direction:column;gap:3px;background:var(--paper);padding:8px 11px;
+    border-radius:7px;border:1px solid var(--line);}
+  .sdc-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);font-weight:600;}
+  .sdc-val{font-size:12.5px;color:var(--ink);font-weight:500;}
+  .sdc-val.mono{font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+  .sdc-val.highlight{color:var(--primary);font-weight:600;}
+  .status-pill{display:inline-block;padding:1px 7px;border-radius:100px;font-size:10.5px;font-weight:600;}
+  .status-pill.on{background:rgba(16,185,129,0.14);color:#065F46;}
+  .status-pill.dev{background:rgba(245,158,11,0.14);color:#92400E;}
+  .sdc-footer{padding-top:12px;border-top:1px dashed var(--line);}
+  .sdc-footer-label{display:block;font-size:11px;color:var(--ink-soft);font-weight:600;margin-bottom:8px;}
+  .sdc-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .schip{font-size:11px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);
+    background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
+
   .blk{opacity:0;transform:translateY(4px);animation:blk-in .32s ease forwards;}
   @keyframes blk-in{to{opacity:1;transform:translateY(0);}}
   @media (prefers-reduced-motion: reduce){.blk{animation:none;opacity:1;transform:none;}}
@@ -119,11 +169,18 @@
   .risk-pill.low{background:var(--line);color:var(--ink-soft);}
 
   .meta{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11px;color:var(--ink-soft);flex-wrap:wrap;}
-  .source-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.02em;padding:3px 8px;
-    border-radius:4px;border:1px solid var(--line);color:var(--primary-ink);
-    background:color-mix(in srgb, var(--primary) 10%, transparent);cursor:pointer;transition:border-color .15s ease;}
-  .source-badge:hover{border-color:var(--primary);}
-  .source-badge.db{color:#8A4A16;background:var(--risk-bg);border-color:color-mix(in srgb, var(--risk) 35%, var(--line));}
+  .source-badge{display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;letter-spacing:.02em;padding:3px 9px;border-radius:5px;border:1px solid var(--line);
+    color:var(--primary-ink);background:color-mix(in srgb, var(--primary) 10%, transparent);
+    cursor:pointer;transition:all .15s ease;}
+  .source-badge:hover{border-color:var(--primary);transform:translateY(-1px);box-shadow:0 2px 6px rgba(0,0,0,0.06);}
+  .source-badge.db{color:#8A4A16;background:var(--risk-bg);border-color:rgba(181,101,42,0.35);}
+  .source-badge.policy{color:#047857;background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);}
+  .source-badge.product{color:#1D4ED8;background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);}
+  .source-badge.grc{color:#6D28D9;background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.3);}
+  .source-badge.sharepoint{color:#0369A1;background:rgba(14,165,233,0.1);border-color:rgba(14,165,233,0.3);}
+  .source-badge.memory{color:#0F766E;background:rgba(20,184,166,0.1);border-color:rgba(20,184,166,0.3);}
+  .source-badge.file{color:#4B5563;background:rgba(107,114,128,0.1);border-color:rgba(107,114,128,0.3);}
 
   .msg-actions{display:flex;align-items:center;gap:3px;opacity:0;transition:opacity .15s ease;}
   .row.agent:hover .msg-actions{opacity:1;}
@@ -155,11 +212,21 @@
   .send-btn:disabled{opacity:.35;cursor:not-allowed;background:var(--ink);}
   .composer-hint{max-width:700px;margin:8px auto 0;font-size:11px;color:var(--ink-soft);text-align:center;}
 
-  .empty-state{max-width:460px;margin:8vh auto 0;text-align:center;}
+  .empty-state{max-width:620px;margin:4vh auto 0;text-align:center;}
   .empty-state .glyph{width:44px;height:44px;border-radius:10px;background:var(--primary);color:#fff;
     display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'Source Serif 4',serif;font-weight:600;font-size:19px;}
   .empty-state h2{font-family:'Source Serif 4',serif;font-weight:600;font-size:19px;margin-bottom:8px;}
   .empty-state p{font-size:13.5px;color:var(--ink-soft);line-height:1.6;}
+  .starter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px;text-align:left;}
+  @media (max-width:620px){.starter-grid{grid-template-columns:1fr;}}
+  .starter-card{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:9px;
+    border:1px solid var(--line);background:var(--paper-raised);color:var(--ink);transition:all .16s ease;
+    cursor:pointer;}
+  .starter-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 3px 12px rgba(0,0,0,0.06);}
+  .sc-icon{font-size:18px;flex:none;margin-top:1px;}
+  .sc-text{display:flex;flex-direction:column;gap:2px;}
+  .sc-text strong{font-size:13px;font-weight:600;color:var(--ink);}
+  .sc-text span{font-size:11.5px;color:var(--ink-soft);line-height:1.35;}
 
   .thread::-webkit-scrollbar, .history::-webkit-scrollbar{width:8px;}
   .thread::-webkit-scrollbar-thumb, .history::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
@@ -247,8 +314,42 @@
     <div class="thread-inner" id="threadInner">
       <div class="empty-state" id="emptyState">
         <div class="glyph">CQ</div>
-        <h2>Ask the agent anything</h2>
-        <p>It answers using your policy documents and employee database, click a source tag on any answer to see exactly where it came from.</p>
+        <h2>Cygeniq Enterprise Intelligence</h2>
+        <p>Ask about internal security policies, product capabilities, compliance frameworks, or live system status.</p>
+
+        <div class="starter-grid">
+          <button class="starter-card" data-prompt="/status">
+            <span class="sc-icon">📊</span>
+            <div class="sc-text">
+              <strong>System Status</strong>
+              <span>Inspect 7 MCP servers &amp; active tools</span>
+            </div>
+          </button>
+
+          <button class="starter-card" data-prompt="What is our HR policy regarding applicant resume and data retention?">
+            <span class="sc-icon">📜</span>
+            <div class="sc-text">
+              <strong>Policy Intelligence</strong>
+              <span>Search HR retention schedules</span>
+            </div>
+          </button>
+
+          <button class="starter-card" data-prompt="What Cygeniq product capabilities defend against prompt injection and agent excessive agency?">
+            <span class="sc-icon">🛡️</span>
+            <div class="sc-text">
+              <strong>HexaShield AI</strong>
+              <span>Adversarial AI &amp; prompt guardrails</span>
+            </div>
+          </button>
+
+          <button class="starter-card" data-prompt="What are the RBI Cyber Security Framework requirements and which Cygeniq products provide the compliance evidence?">
+            <span class="sc-icon">⚖️</span>
+            <div class="sc-text">
+              <strong>Regulatory &amp; GRC</strong>
+              <span>Map RBI controls to product evidence</span>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -473,10 +574,20 @@
     const sourcesArr = Array.isArray(answer.sources) && answer.sources.length
       ? answer.sources
       : (answer.source ? [answer.source] : []);  // backwards compat
+    const typeIcons = {
+      db: '🗄️',
+      policy: '📜',
+      product: '🛡️',
+      grc: '⚖️',
+      sharepoint: '☁️',
+      memory: '🧠',
+      file: '📂'
+    };
     sourcesArr.forEach(src => {
       const badge = document.createElement('button');
-      badge.className = 'source-badge' + (src.type === 'db' ? ' db' : '');
-      badge.textContent = src.tool || src.label;
+      badge.className = 'source-badge ' + (src.type || '');
+      const icon = typeIcons[src.type] ? (typeIcons[src.type] + ' ') : '';
+      badge.textContent = icon + (src.tool || src.label);
       badge.title = src.label;
       badge.addEventListener('click', () => {
         openDrawer(src.drawerTitle, src.label, src.drawerBody);
@@ -536,6 +647,20 @@
   }
   function scrollDown(){ requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; }); }
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+  // Delegate clicks on interactive starter cards
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.starter-card');
+    if (card) {
+      const prompt = card.getAttribute('data-prompt');
+      if (prompt) {
+        input.value = prompt;
+        input.focus();
+        sendBtn.disabled = false;
+        trySend();
+      }
+    }
+  });
 
   renderHistory();
 })();

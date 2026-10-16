@@ -206,25 +206,73 @@ async def chat_endpoint(request: Request):
 
     # --- 4. /status shortcut (no LLM call, dynamic counts) ---
     if user_input.strip().lower() in {"status", "/status"}:
-        auth_line = "ON  (X-API-Key)" if _API_KEY else "OFF (dev mode) "
-        rate_line  = "10 req/min/IP  "
+        auth_badge = (
+            '<span class="status-pill on">🔒 X-API-Key Protected</span>'
+            if _API_KEY
+            else '<span class="status-pill dev">🔓 Dev Mode (No Key)</span>'
+        )
+        rate_badge = '<span class="status-pill on">⚡ 10 req/min/IP</span>'
         tools_available = agent.get_tool_count()
-        dashboard = f"""```text
-╔══════════════════════════════════════════════════╗
-║            CYGENIQ AI LABS AGENT                 ║
-╠══════════════════════════════════════════════════╣
-║ LLM              {agent.LLM_MODEL:<32}║
-║ Framework        LangGraph                       ║
-║ MCP Servers      {agent.MCP_SERVER_COUNT:<32}║
-║ Tools Available  {tools_available:<32}║
-║ Database         Supabase / PostgreSQL           ║
-║ Memory           Persistent (SQLite)             ║
-║ Authentication   {auth_line:<32}║
-║ Rate Limiting    {rate_line:<32}║
-║ Status           ● Connected                     ║
-╚══════════════════════════════════════════════════╝
-```"""
-        return {"blocks": [markdown.markdown(dashboard)], "sources": [], "source": None}
+        dashboard_html = f"""
+<div class="system-dashboard-card">
+  <div class="sdc-header">
+    <div class="sdc-title-row">
+      <span class="sdc-live-dot"></span>
+      <strong class="sdc-title">Cygeniq AI Labs Agent</strong>
+    </div>
+    <span class="sdc-badge live">● Connected (Live)</span>
+  </div>
+
+  <div class="sdc-grid">
+    <div class="sdc-metric">
+      <span class="sdc-label">LLM Engine</span>
+      <span class="sdc-val mono">{agent.LLM_MODEL}</span>
+    </div>
+    <div class="sdc-metric">
+      <span class="sdc-label">Orchestration</span>
+      <span class="sdc-val">LangGraph (StateGraph)</span>
+    </div>
+    <div class="sdc-metric">
+      <span class="sdc-label">MCP Servers</span>
+      <span class="sdc-val highlight">{agent.MCP_SERVER_COUNT} Active Subsystems</span>
+    </div>
+    <div class="sdc-metric">
+      <span class="sdc-label">Tools Available</span>
+      <span class="sdc-val highlight">{tools_available} Tools Loaded</span>
+    </div>
+    <div class="sdc-metric">
+      <span class="sdc-label">Knowledge Base</span>
+      <span class="sdc-val">Supabase + SharePoint Graph</span>
+    </div>
+    <div class="sdc-metric">
+      <span class="sdc-label">Persistent Memory</span>
+      <span class="sdc-val">SQLite Checkpointer (/app/data)</span>
+    </div>
+    <div class="sdc-metric">
+      <span class="sdc-label">Authentication</span>
+      <span class="sdc-val">{auth_badge}</span>
+    </div>
+    <div class="sdc-metric">
+      <span class="sdc-label">Rate Limiter</span>
+      <span class="sdc-val">{rate_badge}</span>
+    </div>
+  </div>
+
+  <div class="sdc-footer">
+    <span class="sdc-footer-label">Active MCP Subsystems:</span>
+    <div class="sdc-chips">
+      <span class="schip db">🗄️ Supabase Postgres</span>
+      <span class="schip file">📂 Knowledge Filesystem</span>
+      <span class="schip memory">🧠 Persistent Knowledge Graph</span>
+      <span class="schip sp">☁️ SharePoint & OneDrive</span>
+      <span class="schip policy">📜 Policy Intelligence</span>
+      <span class="schip product">🛡️ Product Intelligence</span>
+      <span class="schip grc">⚖️ GRC Regulatory Engine</span>
+    </div>
+  </div>
+</div>
+"""
+        return {"blocks": [dashboard_html], "sources": [], "source": None}
 
     # --- 5. Invoke the agent ---
     try:
