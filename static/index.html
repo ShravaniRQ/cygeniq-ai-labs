@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cygeniq Agent — Risk &amp; Compliance Assistant</title>
+<meta name="description" content="Cygeniq AI Labs — Role-based enterprise intelligence assistant for AI risk, GRC, and presales teams.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -43,7 +44,87 @@
   }
   ::selection{background:var(--primary);color:#fff;}
   button{font-family:inherit;cursor:pointer;}
-  button:focus-visible, input:focus-visible, .chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+  button:focus-visible, input:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+
+  /* ====================================================
+     LOGIN SCREEN
+  ==================================================== */
+  #loginScreen{
+    display:flex; align-items:center; justify-content:center;
+    flex:1; min-height:100%;
+    background:var(--paper);
+    position:relative; overflow:hidden;
+  }
+  #loginScreen::before{
+    content:'';
+    position:absolute; inset:0;
+    background: radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 70%);
+    pointer-events:none;
+  }
+  .login-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:40px 40px 36px;
+    width:100%; max-width:400px;
+    box-shadow:0 8px 40px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,.06) inset;
+    position:relative; z-index:1;
+  }
+  .login-logo{
+    display:flex; align-items:center; gap:12px; margin-bottom:28px;
+  }
+  .login-logo-mark{
+    width:40px; height:40px; border-radius:10px;
+    background:var(--primary); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Source Serif 4',serif; font-weight:600; font-size:17px;
+  }
+  .login-logo-text{font-family:'Source Serif 4',serif;font-weight:600;font-size:18px;line-height:1.15;}
+  .login-logo-text small{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .login-card h2{font-family:'Source Serif 4',serif;font-weight:600;font-size:21px;margin-bottom:6px;}
+  .login-card .login-sub{font-size:13px;color:var(--ink-soft);margin-bottom:26px;line-height:1.5;}
+  .field-group{display:flex;flex-direction:column;gap:5px;margin-bottom:16px;}
+  .field-group label{font-size:12px;font-weight:500;color:var(--ink-soft);letter-spacing:.02em;}
+  .field-group input{
+    border:1px solid var(--line); border-radius:9px;
+    background:var(--paper); color:var(--ink);
+    font-family:inherit; font-size:14px;
+    padding:11px 13px;
+    transition:border-color .15s ease;
+  }
+  .field-group input:focus{outline:none; border-color:var(--primary);}
+  .field-group input::placeholder{color:var(--ink-soft);}
+  .login-btn{
+    width:100%; padding:12px; border:none; border-radius:9px;
+    background:var(--ink); color:var(--paper);
+    font-family:inherit; font-size:14px; font-weight:600;
+    cursor:pointer; margin-top:6px;
+    transition:background .15s ease, opacity .15s ease;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .login-btn:hover{background:var(--primary);}
+  .login-btn:disabled{opacity:.5; cursor:not-allowed; background:var(--ink);}
+  .login-error{
+    background:var(--risk-bg); color:var(--risk);
+    border:1px solid rgba(181,101,42,0.3);
+    border-radius:8px; padding:10px 13px;
+    font-size:13px; margin-top:12px;
+    display:none;
+  }
+  .login-error.show{display:block;}
+  .login-footer{
+    margin-top:22px; padding-top:18px; border-top:1px solid var(--line);
+    text-align:center; font-size:11.5px; color:var(--ink-soft); line-height:1.6;
+  }
+  .role-hints{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px;}
+  .role-hint{font-size:10.5px;padding:2px 9px;border-radius:100px;border:1px solid var(--line);background:var(--paper);color:var(--ink-soft);}
+
+  /* ====================================================
+     MAIN APP (hidden until logged in)
+  ==================================================== */
+  #appScreen{display:none;flex:1;overflow:hidden;}
+  body.logged-in #loginScreen{display:none;}
+  body.logged-in #appScreen{display:flex;}
 
   /* ---------- rail ---------- */
   .rail{width:240px;min-width:240px;background:var(--paper-raised);border-right:1px solid var(--line);
@@ -58,12 +139,7 @@
     transition:border-color .15s ease, background .15s ease;}
   .new-chat:hover{border-color:var(--primary);background:color-mix(in srgb, var(--primary) 8%, transparent);}
   .new-chat svg{flex:none;}
-  .rail-section-label{font-size:11px;color:var(--ink-soft);margin:22px 0 9px;font-weight:500;display:flex;justify-content:space-between;align-items:center;}
-  .starters{display:flex;flex-direction:column;gap:6px;}
-  .chip{text-align:left;background:transparent;border:1px solid transparent;border-radius:7px;padding:8px 9px;
-    font-size:12.5px;color:var(--ink-soft);line-height:1.4;transition:background .15s ease, color .15s ease, border-color .15s ease;}
-  .chip:hover{background:var(--paper);border-color:var(--line);color:var(--ink);}
-
+  .rail-section-label{font-size:11px;color:var(--ink-soft);margin:22px 0 9px;font-weight:500;}
   .history{display:flex;flex-direction:column;gap:2px;overflow-y:auto;}
   .history-item{display:flex;align-items:center;gap:8px;text-align:left;background:transparent;border:none;
     border-radius:7px;padding:8px 9px;font-size:12.5px;color:var(--ink-soft);transition:background .15s ease,color .15s ease;}
@@ -72,6 +148,25 @@
   .history-item .hd{width:6px;height:6px;border-radius:50%;background:var(--line);flex:none;}
   .history-item.active .hd{background:var(--primary);}
   .history-empty{font-size:11.5px;color:var(--ink-soft);padding:4px 9px;line-height:1.5;}
+
+  /* User profile card in rail */
+  .user-card{
+    border:1px solid var(--line); border-radius:9px;
+    padding:10px 11px; margin-bottom:14px;
+    display:flex; align-items:center; gap:10px;
+    background:var(--paper);
+  }
+  .user-avatar{
+    width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; flex:none;
+  }
+  .user-info{flex:1; min-width:0;}
+  .user-info .u-name{font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .role-badge{display:inline-block;font-size:10px;font-weight:600;padding:1px 7px;border-radius:100px;margin-top:2px;}
+  .logout-btn{border:none;background:transparent;color:var(--ink-soft);padding:4px;border-radius:5px;
+    display:flex;align-items:center;justify-content:center;transition:color .15s ease;flex:none;}
+  .logout-btn:hover{color:var(--risk);}
 
   .rail-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-soft);line-height:1.5;}
   .rail-footer strong{color:var(--ink);font-weight:500;}
@@ -104,9 +199,7 @@
   .bubble p:last-child{margin-bottom:0;}
   .bubble strong{font-weight:600;color:var(--ink);}
   .bubble h1,.bubble h2,.bubble h3,.bubble h4{font-family:'Source Serif 4',serif;font-weight:600;color:var(--ink);margin:14px 0 6px;}
-  .bubble h1{font-size:18px;}
-  .bubble h2{font-size:16px;}
-  .bubble h3{font-size:14.5px;}
+  .bubble h1{font-size:18px;} .bubble h2{font-size:16px;} .bubble h3{font-size:14.5px;}
   .bubble h4{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
   .bubble ul,.bubble ol{margin:8px 0 8px 20px;}
   .bubble li{margin-bottom:4px;line-height:1.6;}
@@ -125,6 +218,15 @@
   .bubble td{padding:9px 12px;border-bottom:1px solid var(--line);color:var(--ink);vertical-align:top;}
   .bubble tr:last-child td{border-bottom:none;}
   .bubble tr:hover td{background:color-mix(in srgb, var(--primary) 4%, transparent);}
+
+  /* ---- access-denied inline ---- */
+  .access-denied-msg{
+    display:flex; align-items:flex-start; gap:10px;
+    background:var(--risk-bg); border:1px solid rgba(181,101,42,0.3);
+    border-radius:9px; padding:12px 14px; margin:4px 0; font-size:13.5px; color:var(--risk);
+  }
+  .access-denied-msg .ad-icon{font-size:18px;flex:none;}
+  .access-denied-msg strong{display:block;margin-bottom:2px;}
 
   /* ---------- System Dashboard Card ---------- */
   .system-dashboard-card{background:var(--paper-raised);border:1px solid var(--line);border-radius:10px;
@@ -157,16 +259,6 @@
   .blk{opacity:0;transform:translateY(4px);animation:blk-in .32s ease forwards;}
   @keyframes blk-in{to{opacity:1;transform:translateY(0);}}
   @media (prefers-reduced-motion: reduce){.blk{animation:none;opacity:1;transform:none;}}
-
-  .data-table{width:100%;border-collapse:collapse;margin-top:4px;font-size:13px;}
-  .data-table th{text-align:left;font-weight:500;color:var(--ink-soft);font-size:11px;
-    padding:6px 8px;border-bottom:1px solid var(--line);}
-  .data-table td{padding:6px 8px;border-bottom:1px solid var(--line);}
-  .data-table tr:last-child td{border-bottom:none;}
-  .risk-pill{display:inline-block;padding:1px 8px;border-radius:100px;font-size:11px;font-weight:500;}
-  .risk-pill.high{background:var(--risk-bg);color:#8A4A16;}
-  .risk-pill.medium{background:color-mix(in srgb, var(--primary) 14%, transparent);color:var(--primary-ink);}
-  .risk-pill.low{background:var(--line);color:var(--ink-soft);}
 
   .meta{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11px;color:var(--ink-soft);flex-wrap:wrap;}
   .source-badge{display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;
@@ -212,16 +304,18 @@
   .send-btn:disabled{opacity:.35;cursor:not-allowed;background:var(--ink);}
   .composer-hint{max-width:700px;margin:8px auto 0;font-size:11px;color:var(--ink-soft);text-align:center;}
 
+  /* Empty state / starters */
   .empty-state{max-width:620px;margin:4vh auto 0;text-align:center;}
   .empty-state .glyph{width:44px;height:44px;border-radius:10px;background:var(--primary);color:#fff;
     display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'Source Serif 4',serif;font-weight:600;font-size:19px;}
   .empty-state h2{font-family:'Source Serif 4',serif;font-weight:600;font-size:19px;margin-bottom:8px;}
   .empty-state p{font-size:13.5px;color:var(--ink-soft);line-height:1.6;}
+  .empty-state .role-greeting{display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+    font-size:12.5px;font-weight:500;padding:4px 12px;border-radius:100px;border:1px solid var(--line);}
   .starter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px;text-align:left;}
   @media (max-width:620px){.starter-grid{grid-template-columns:1fr;}}
   .starter-card{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:9px;
-    border:1px solid var(--line);background:var(--paper-raised);color:var(--ink);transition:all .16s ease;
-    cursor:pointer;}
+    border:1px solid var(--line);background:var(--paper-raised);color:var(--ink);transition:all .16s ease;cursor:pointer;}
   .starter-card:hover{border-color:var(--primary);transform:translateY(-2px);box-shadow:0 3px 12px rgba(0,0,0,0.06);}
   .sc-icon{font-size:18px;flex:none;margin-top:1px;}
   .sc-text{display:flex;flex-direction:column;gap:2px;}
@@ -232,7 +326,7 @@
   .thread::-webkit-scrollbar-thumb, .history::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
   .thread::-webkit-scrollbar-track, .history::-webkit-scrollbar-track{background:transparent;}
 
-  /* ---------- source drawer ---------- */
+  /* Source drawer */
   .drawer{position:fixed;top:0;right:0;bottom:0;width:360px;max-width:88vw;background:var(--paper-raised);
     border-left:1px solid var(--line);z-index:30;transform:translateX(100%);transition:transform .22s ease;
     display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
@@ -259,10 +353,10 @@
     header{padding:12px 16px;}
     .thread{padding:18px 16px 8px;}
     .composer{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));}
-    .row{max-width:94%;}
-    .row.agent{width:94%;}
+    .row{max-width:94%;} .row.agent{width:94%;}
     .menu-btn{display:flex !important;}
     .status{display:none;}
+    .login-card{margin:16px;padding:28px 24px;}
   }
   .menu-btn{display:none;width:34px;height:34px;border:1px solid var(--line);background:var(--paper-raised);
     border-radius:8px;align-items:center;justify-content:center;margin-right:10px;flex:none;color:var(--ink);}
@@ -271,140 +365,199 @@
 </head>
 <body>
 
-<div class="scrim" id="railScrim"></div>
-<div class="scrim" id="drawerScrim"></div>
+<!-- ================================================
+     LOGIN SCREEN
+================================================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">CQ</div>
+      <div class="login-logo-text">Cygeniq Agent<small>Enterprise Intelligence Platform</small></div>
+    </div>
+    <h2>Sign in to your workspace</h2>
+    <p class="login-sub">Access is role-restricted. Contact your administrator for credentials.</p>
 
-<aside class="rail" id="rail">
-  <div class="brand">
-    <div class="brand-mark">CQ</div>
-    <div class="brand-text">Cygeniq Agent<small>Risk &amp; Compliance Assistant</small></div>
-  </div>
+    <div class="field-group">
+      <label for="loginUsername">Username</label>
+      <input type="text" id="loginUsername" placeholder="Enter your username" autocomplete="username" autocapitalize="none">
+    </div>
+    <div class="field-group">
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="loginBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Sign In
+    </button>
+    <div class="login-error" id="loginError"></div>
 
-  <button class="new-chat" id="newChatBtn">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-    New chat
-  </button>
-
-
-  <div class="rail-footer">
-    <strong>Live interface.</strong> Connected to Cygeniq AI Agent via FastAPI.
-  </div>
-</aside>
-
-<div class="main">
-  <header>
-    <div class="header-left">
-      <button class="menu-btn" id="menuBtn" aria-label="Open menu">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
-      <div class="title-block">
-        <h1>Cygeniq Agent</h1>
-        <p>Ask about policies, employees, or risk data</p>
+    <div class="login-footer">
+      Available roles:
+      <div class="role-hints">
+        <span class="role-hint">🔑 admin — Full access</span>
+        <span class="role-hint">📊 analyst — GRC &amp; DB</span>
+        <span class="role-hint">🎯 presales — Products &amp; Policy</span>
       </div>
     </div>
-    <div class="header-right">
-      <button class="icon-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle theme">
-        <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-      </button>
-      <div class="status"><span class="dot"></span>Connected (Live)</div>
-    </div>
-  </header>
-
-  <div class="thread" id="thread">
-    <div class="thread-inner" id="threadInner">
-      <div class="empty-state" id="emptyState">
-        <div class="glyph">CQ</div>
-        <h2>Cygeniq Enterprise Intelligence</h2>
-        <p>Ask about internal security policies, product capabilities, compliance frameworks, or live system status.</p>
-
-        <div class="starter-grid">
-          <button class="starter-card" data-prompt="/status">
-            <span class="sc-icon">📊</span>
-            <div class="sc-text">
-              <strong>System Status</strong>
-              <span>Inspect 7 MCP servers &amp; active tools</span>
-            </div>
-          </button>
-
-          <button class="starter-card" data-prompt="What is our HR policy regarding applicant resume and data retention?">
-            <span class="sc-icon">📜</span>
-            <div class="sc-text">
-              <strong>Policy Intelligence</strong>
-              <span>Search HR retention schedules</span>
-            </div>
-          </button>
-
-          <button class="starter-card" data-prompt="What Cygeniq product capabilities defend against prompt injection and agent excessive agency?">
-            <span class="sc-icon">🛡️</span>
-            <div class="sc-text">
-              <strong>HexaShield AI</strong>
-              <span>Adversarial AI &amp; prompt guardrails</span>
-            </div>
-          </button>
-
-          <button class="starter-card" data-prompt="What are the RBI Cyber Security Framework requirements and which Cygeniq products provide the compliance evidence?">
-            <span class="sc-icon">⚖️</span>
-            <div class="sc-text">
-              <strong>Regulatory &amp; GRC</strong>
-              <span>Map RBI controls to product evidence</span>
-            </div>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="composer">
-    <div class="composer-inner">
-      <div class="composer-field">
-        <input type="text" id="input" placeholder="Ask a question…" autocomplete="off">
-      </div>
-      <button class="send-btn" id="sendBtn" aria-label="Send message" disabled>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-      </button>
-    </div>
-    <div class="composer-hint">Press Enter to send.</div>
   </div>
 </div>
 
-<aside class="drawer" id="drawer">
-  <div class="drawer-head">
-    <div>
-      <h3 id="drawerTitle">Source</h3>
-      <p id="drawerPath">—</p>
+<!-- ================================================
+     MAIN APP SCREEN
+================================================= -->
+<div id="appScreen">
+  <div class="scrim" id="railScrim"></div>
+  <div class="scrim" id="drawerScrim"></div>
+
+  <aside class="rail" id="rail">
+    <div class="brand">
+      <div class="brand-mark">CQ</div>
+      <div class="brand-text">Cygeniq Agent<small>Risk &amp; Compliance Assistant</small></div>
     </div>
-    <button class="drawer-close" id="drawerClose" aria-label="Close">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+
+    <!-- User profile card (populated on login) -->
+    <div class="user-card" id="userCard">
+      <div class="user-avatar" id="userAvatar">👤</div>
+      <div class="user-info">
+        <div class="u-name" id="userNameEl">—</div>
+        <div class="role-badge" id="roleBadgeEl"></div>
+      </div>
+      <button class="logout-btn" id="logoutBtn" title="Sign out" aria-label="Sign out">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+
+    <button class="new-chat" id="newChatBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      New chat
     </button>
+
+    <div class="rail-section-label">Recent Chats</div>
+    <div class="history" id="history"></div>
+
+    <div class="rail-footer">
+      <strong>Live interface.</strong> Connected to Cygeniq AI Agent via FastAPI.
+    </div>
+  </aside>
+
+  <div class="main">
+    <header>
+      <div class="header-left">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="title-block">
+          <h1>Cygeniq Agent</h1>
+          <p id="headerSubtitle">Ask about policies, employees, or risk data</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle theme">
+          <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+        <div class="status"><span class="dot"></span>Connected (Live)</div>
+      </div>
+    </header>
+
+    <div class="thread" id="thread">
+      <div class="thread-inner" id="threadInner">
+        <div class="empty-state" id="emptyState">
+          <div class="glyph">CQ</div>
+          <h2>Cygeniq Enterprise Intelligence</h2>
+          <p>Ask about internal security policies, product capabilities, compliance frameworks, or live system status.</p>
+          <div class="role-greeting" id="roleGreeting" style="display:none;"></div>
+          <!-- Starter cards injected dynamically by JS after login -->
+          <div class="starter-grid" id="starterGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <div class="composer-inner">
+        <div class="composer-field">
+          <input type="text" id="input" placeholder="Ask a question…" autocomplete="off">
+        </div>
+        <button class="send-btn" id="sendBtn" aria-label="Send message" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+      <div class="composer-hint">Press Enter to send.</div>
+    </div>
   </div>
-  <div class="drawer-body" id="drawerBody"></div>
-</aside>
+
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head">
+      <div>
+        <h3 id="drawerTitle">Source</h3>
+        <p id="drawerPath">—</p>
+      </div>
+      <button class="drawer-close" id="drawerClose" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+</div>
 
 <script>
 (function(){
-  const thread = document.getElementById('thread');
-  const threadInner = document.getElementById('threadInner');
-  const emptyState = document.getElementById('emptyState');
-  const input = document.getElementById('input');
-  const sendBtn = document.getElementById('sendBtn');
-  const newChatBtn = document.getElementById('newChatBtn');
-  const starters = document.getElementById('starters');
-  const menuBtn = document.getElementById('menuBtn');
-  const rail = document.getElementById('rail');
-  const railScrim = document.getElementById('railScrim');
-  const drawer = document.getElementById('drawer');
-  const drawerScrim = document.getElementById('drawerScrim');
-  const drawerClose = document.getElementById('drawerClose');
-  const drawerTitle = document.getElementById('drawerTitle');
-  const drawerPath = document.getElementById('drawerPath');
-  const drawerBody = document.getElementById('drawerBody');
-  const themeBtn = document.getElementById('themeBtn');
-  const historyEl = document.getElementById('history');
+  // ============================================================
+  // STATE
+  // ============================================================
+  let authToken = null;
+  let currentUser = null;   // { username, role, role_icon, role_color, role_bg, starter_cards }
 
-  let sessions = [];      // {id, title, html}
+  // Restore from sessionStorage
+  try {
+    const saved = sessionStorage.getItem('cq-auth');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      authToken = parsed.token;
+      currentUser = parsed.user;
+    }
+  } catch(e){}
+
+  // ============================================================
+  // ELEMENTS
+  // ============================================================
+  const loginScreen  = document.getElementById('loginScreen');
+  const appScreen    = document.getElementById('appScreen');
+  const loginUsernameEl = document.getElementById('loginUsername');
+  const loginPasswordEl = document.getElementById('loginPassword');
+  const loginBtn     = document.getElementById('loginBtn');
+  const loginError   = document.getElementById('loginError');
+
+  const thread       = document.getElementById('thread');
+  const threadInner  = document.getElementById('threadInner');
+  const emptyState   = document.getElementById('emptyState');
+  const input        = document.getElementById('input');
+  const sendBtn      = document.getElementById('sendBtn');
+  const newChatBtn   = document.getElementById('newChatBtn');
+  const menuBtn      = document.getElementById('menuBtn');
+  const rail         = document.getElementById('rail');
+  const railScrim    = document.getElementById('railScrim');
+  const drawer       = document.getElementById('drawer');
+  const drawerScrim  = document.getElementById('drawerScrim');
+  const drawerClose  = document.getElementById('drawerClose');
+  const drawerTitle  = document.getElementById('drawerTitle');
+  const drawerPath   = document.getElementById('drawerPath');
+  const drawerBody   = document.getElementById('drawerBody');
+  const themeBtn     = document.getElementById('themeBtn');
+  const historyEl    = document.getElementById('history');
+  const logoutBtn    = document.getElementById('logoutBtn');
+  const userNameEl   = document.getElementById('userNameEl');
+  const roleBadgeEl  = document.getElementById('roleBadgeEl');
+  const userAvatar   = document.getElementById('userAvatar');
+  const roleGreeting = document.getElementById('roleGreeting');
+  const starterGrid  = document.getElementById('starterGrid');
+  const headerSubtitle = document.getElementById('headerSubtitle');
+
+  let sessions = [];
   let activeId = null;
 
-  /* ---------- theme ---------- */
+  // ============================================================
+  // THEME
+  // ============================================================
   try{
     const saved = localStorage.getItem('cq-theme');
     if (saved) document.documentElement.setAttribute('data-theme', saved);
@@ -416,7 +569,135 @@
     try{ localStorage.setItem('cq-theme', next); }catch(e){}
   });
 
-  /* ---------- rail / drawer open-close ---------- */
+  // ============================================================
+  // SHOW / HIDE SCREENS
+  // ============================================================
+  function showApp() {
+    document.body.classList.add('logged-in');
+    applyUserUI();
+    renderHistory();
+    setTimeout(() => input.focus(), 100);
+  }
+
+  function showLogin() {
+    document.body.classList.remove('logged-in');
+    loginUsernameEl.value = '';
+    loginPasswordEl.value = '';
+    loginError.classList.remove('show');
+    loginUsernameEl.focus();
+  }
+
+  function applyUserUI() {
+    if (!currentUser) return;
+    userNameEl.textContent = currentUser.username;
+    userAvatar.textContent = currentUser.role_icon || '👤';
+    roleBadgeEl.textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+    roleBadgeEl.style.background = currentUser.role_bg || 'transparent';
+    roleBadgeEl.style.color = currentUser.role_color || 'inherit';
+
+    roleGreeting.innerHTML =
+      `${currentUser.role_icon} Signed in as <strong>${currentUser.username}</strong> &nbsp;·&nbsp; ${currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)} access`;
+    roleGreeting.style.background = currentUser.role_bg;
+    roleGreeting.style.color = currentUser.role_color;
+    roleGreeting.style.display = 'inline-flex';
+
+    // Build starter grid from role-specific cards
+    starterGrid.innerHTML = '';
+    const cards = currentUser.starter_cards || [];
+    cards.forEach(card => {
+      const btn = document.createElement('button');
+      btn.className = 'starter-card';
+      btn.dataset.prompt = card.prompt;
+      btn.innerHTML = `
+        <span class="sc-icon">${card.icon}</span>
+        <div class="sc-text">
+          <strong>${escapeHtml(card.label)}</strong>
+          <span>${escapeHtml(card.prompt.slice(0, 60))}${card.prompt.length > 60 ? '…' : ''}</span>
+        </div>`;
+      starterGrid.appendChild(btn);
+    });
+
+    // Header subtitle shows role context
+    const subtitleMap = {
+      admin:    'Full access — DB, GRC, Policy, Product, SharePoint',
+      analyst:  'Analyst access — GRC, Policy, Product, DB (read)',
+      presales: 'Presales access — Product & Policy Intelligence',
+    };
+    headerSubtitle.textContent = subtitleMap[currentUser.role] || 'Ask about policies, employees, or risk data';
+  }
+
+  // ============================================================
+  // LOGIN
+  // ============================================================
+  async function doLogin() {
+    const username = loginUsernameEl.value.trim();
+    const password = loginPasswordEl.value;
+    if (!username || !password) {
+      showLoginError('Please enter your username and password.');
+      return;
+    }
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Signing in…';
+    loginError.classList.remove('show');
+    try {
+      const res = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showLoginError(data.error || 'Login failed. Please check your credentials.');
+        return;
+      }
+      authToken = data.access_token;
+      currentUser = {
+        username:     data.username,
+        role:         data.role,
+        role_icon:    data.role_icon,
+        role_color:   data.role_color,
+        role_bg:      data.role_bg,
+        starter_cards: data.starter_cards || [],
+      };
+      try {
+        sessionStorage.setItem('cq-auth', JSON.stringify({ token: authToken, user: currentUser }));
+      } catch(e){}
+      showApp();
+    } catch(e) {
+      showLoginError('Could not reach the server. Please try again.');
+    } finally {
+      loginBtn.disabled = false;
+      loginBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Sign In';
+    }
+  }
+
+  function showLoginError(msg) {
+    loginError.textContent = '⚠️ ' + msg;
+    loginError.classList.add('show');
+  }
+
+  loginBtn.addEventListener('click', doLogin);
+  loginPasswordEl.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  loginUsernameEl.addEventListener('keydown', e => { if (e.key === 'Enter') loginPasswordEl.focus(); });
+
+  // ============================================================
+  // LOGOUT
+  // ============================================================
+  logoutBtn.addEventListener('click', () => {
+    authToken = null;
+    currentUser = null;
+    sessions = [];
+    activeId = null;
+    try { sessionStorage.removeItem('cq-auth'); } catch(e){}
+    threadInner.innerHTML = '';
+    threadInner.appendChild(emptyState);
+    starterGrid.innerHTML = '';
+    showLogin();
+  });
+
+  // ============================================================
+  // RAIL / DRAWER
+  // ============================================================
   menuBtn.addEventListener('click', () => { rail.classList.add('open'); railScrim.classList.add('open'); });
   railScrim.addEventListener('click', () => { rail.classList.remove('open'); railScrim.classList.remove('open'); });
   function openDrawer(title, path, bodyHtml){
@@ -429,21 +710,12 @@
   drawerClose.addEventListener('click', closeDrawer);
   drawerScrim.addEventListener('click', closeDrawer);
 
-  /* ---------- composer ---------- */
+  // ============================================================
+  // COMPOSER
+  // ============================================================
   input.addEventListener('input', () => { sendBtn.disabled = input.value.trim().length === 0; });
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); trySend(); } });
   sendBtn.addEventListener('click', trySend);
-
-  if (starters) {
-    starters.addEventListener('click', (e) => {
-      const btn = e.target.closest('.chip');
-      if (!btn) return;
-      input.value = btn.dataset.q;
-      sendBtn.disabled = false;
-      trySend();
-      if (window.innerWidth <= 760){ rail.classList.remove('open'); railScrim.classList.remove('open'); }
-    });
-  }
 
   newChatBtn.addEventListener('click', () => {
     saveCurrentSession();
@@ -497,40 +769,50 @@
     });
   }
 
-  /* ---------- sending ---------- */
+  // ============================================================
+  // SEND & RECEIVE
+  // ============================================================
   async function trySend(){
     const text = input.value.trim();
     if (!text) return;
+    if (!authToken) {
+      showLogin();
+      return;
+    }
     if (emptyState.isConnected) emptyState.remove();
     addUserRow(escapeHtml(text));
     input.value = '';
     sendBtn.disabled = true;
     scrollDown();
     const typingEl = addTyping();
-    
-    try {
-      if (!activeId) {
-        activeId = 'c' + Date.now();
-      }
-      // Include API key header if configured (read from page meta or window global)
-      const apiKey = window.__CYGENIQ_API_KEY__ || '';
-      const headers = { 'Content-Type': 'application/json' };
-      if (apiKey) headers['X-API-Key'] = apiKey;
 
-      const response = await fetch('/chat', {
+    try {
+      if (!activeId) activeId = 'c' + Date.now();
+      const res = await fetch('/chat', {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + authToken,
+        },
         body: JSON.stringify({ message: text, session_id: activeId })
       });
 
-      const answer = await response.json();
+      const answer = await res.json();
       typingEl.remove();
-      if (response.status === 429) {
+
+      if (res.status === 401) {
+        // Token expired — force re-login
+        authToken = null;
+        currentUser = null;
+        try { sessionStorage.removeItem('cq-auth'); } catch(e){}
+        addAgentRow({ blocks: ['<div class="access-denied-msg"><span class="ad-icon">🔒</span><div><strong>Session expired</strong>Your session has expired. Please sign in again.</div></div>'], sources: [], source: null });
+        setTimeout(() => showLogin(), 2500);
+      } else if (res.status === 403) {
+        addAgentRow({ blocks: ['<div class="access-denied-msg"><span class="ad-icon">🚫</span><div><strong>Access restricted</strong>Your role does not permit this action. Contact your administrator.</div></div>'], sources: [], source: null });
+      } else if (res.status === 429) {
         addAgentRow({ blocks: ['<p>⚠️ Too many requests. Please wait a moment before sending another message.</p>'], sources: [], source: null });
-      } else if (response.status === 401) {
-        addAgentRow({ blocks: ['<p>🔒 Authentication required. Please contact your administrator.</p>'], sources: [], source: null });
-      } else if (!response.ok || answer.error) {
-        addAgentRow({ blocks: [`<p>Error from backend: ${escapeHtml(answer.error || 'Server error (' + response.status + ')')}</p>`], sources: [], source: null });
+      } else if (!res.ok || answer.error) {
+        addAgentRow({ blocks: [`<p>Error from backend: ${escapeHtml(answer.error || 'Server error (' + res.status + ')')}</p>`], sources: [], source: null });
       } else {
         addAgentRow(answer);
       }
@@ -539,11 +821,28 @@
       typingEl.remove();
       addAgentRow({ blocks: ['<p>Connection to the agent was lost. Please check the backend.</p>'], source: null });
     }
-    
+
     saveCurrentSession();
     scrollDown();
   }
 
+  // Delegate clicks on starter cards
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.starter-card');
+    if (card) {
+      const prompt = card.getAttribute('data-prompt');
+      if (prompt) {
+        input.value = prompt;
+        input.focus();
+        sendBtn.disabled = false;
+        trySend();
+      }
+    }
+  });
+
+  // ============================================================
+  // ROW RENDERERS
+  // ============================================================
   function addUserRow(html){
     const row = document.createElement('div');
     row.className = 'row user';
@@ -558,7 +857,7 @@
     bubble.className = 'bubble';
     row.appendChild(bubble);
 
-    answer.blocks.forEach((blockHtml, i) => {
+    (answer.blocks || []).forEach((blockHtml, i) => {
       const wrap = document.createElement('div');
       wrap.className = 'blk';
       wrap.style.animationDelay = (i * 0.12) + 's';
@@ -570,31 +869,22 @@
     meta.className = 'meta';
     meta.innerHTML = '<span>' + nowTime() + '</span>';
 
-    // Render ALL source badges (one per tool used in this response)
+    // Source badges
     const sourcesArr = Array.isArray(answer.sources) && answer.sources.length
       ? answer.sources
-      : (answer.source ? [answer.source] : []);  // backwards compat
-    const typeIcons = {
-      db: '🗄️',
-      policy: '📜',
-      product: '🛡️',
-      grc: '⚖️',
-      sharepoint: '☁️',
-      memory: '🧠',
-      file: '📂'
-    };
+      : (answer.source ? [answer.source] : []);
+    const typeIcons = { db:'🗄️', policy:'📜', product:'🛡️', grc:'⚖️', sharepoint:'☁️', memory:'🧠', file:'📂' };
     sourcesArr.forEach(src => {
       const badge = document.createElement('button');
       badge.className = 'source-badge ' + (src.type || '');
       const icon = typeIcons[src.type] ? (typeIcons[src.type] + ' ') : '';
       badge.textContent = icon + (src.tool || src.label);
       badge.title = src.label;
-      badge.addEventListener('click', () => {
-        openDrawer(src.drawerTitle, src.label, src.drawerBody);
-      });
+      badge.addEventListener('click', () => openDrawer(src.drawerTitle, src.label, src.drawerBody));
       meta.appendChild(badge);
     });
 
+    // Msg action buttons (copy / thumbs)
     const actions = document.createElement('div');
     actions.className = 'msg-actions';
     actions.innerHTML =
@@ -617,8 +907,7 @@
       try{
         await navigator.clipboard.writeText(text);
         const tag = document.createElement('span');
-        tag.className = 'copied';
-        tag.textContent = 'Copied';
+        tag.className = 'copied'; tag.textContent = 'Copied';
         actions.appendChild(tag);
         setTimeout(() => tag.remove(), 1400);
       }catch(e){}
@@ -638,6 +927,9 @@
     return row;
   }
 
+  // ============================================================
+  // UTILS
+  // ============================================================
   function nowTime(){
     const d = new Date();
     let h = d.getHours(), m = d.getMinutes();
@@ -648,21 +940,15 @@
   function scrollDown(){ requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; }); }
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
-  // Delegate clicks on interactive starter cards
-  document.addEventListener('click', (e) => {
-    const card = e.target.closest('.starter-card');
-    if (card) {
-      const prompt = card.getAttribute('data-prompt');
-      if (prompt) {
-        input.value = prompt;
-        input.focus();
-        sendBtn.disabled = false;
-        trySend();
-      }
-    }
-  });
-
-  renderHistory();
+  // ============================================================
+  // INIT
+  // ============================================================
+  if (authToken && currentUser) {
+    showApp();
+  } else {
+    showLogin();
+    renderHistory();
+  }
 })();
 </script>
 </body>

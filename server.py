@@ -3,16 +3,17 @@ import uuid
 import html as html_lib
 import markdown
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+
 try:
     from slowapi import Limiter, _rate_limit_exceeded_handler
     from slowapi.util import get_remote_address
     from slowapi.errors import RateLimitExceeded
 
     def get_real_client_ip(request: Request) -> str:
-        """Extract client IP, checking X-Forwarded-For header for reverse proxies (Render, Nginx, Cloudflare)."""
+        """Extract client IP, checking X-Forwarded-For header for reverse proxies."""
         forwarded = request.headers.get("X-Forwarded-For")
         if forwarded:
             return forwarded.split(",")[0].strip()
@@ -31,11 +32,22 @@ except ImportError:
 
 import agent
 from agent import init_agent
+from auth import (
+    authenticate_user,
+    create_access_token,
+    ensure_users_table,
+    get_current_user,
+    is_tool_allowed,
+    RoleUser,
+    ROLE_LABELS,
+    ROLE_STARTER_CARDS,
+    ROLE_DENIED_TOOLS,
+)
 
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
-app = FastAPI(title="Cygeniq AI Labs Agent", version="1.0.0")
+app = FastAPI(title="Cygeniq AI Labs Agent", version="2.0.0")
 if HAS_SLOWAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -44,19 +56,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Global agent reference
 cygeniq_agent = None
-
-# ---------------------------------------------------------------------------
-# Auth helper
-# ---------------------------------------------------------------------------
-_API_KEY = (os.getenv("CYGENIQ_API_KEY") or "").strip()
-
-def _check_auth(request: Request) -> bool:
-    """Return True if auth passes. When CYGENIQ_API_KEY is unset, allow all (dev mode)."""
-    if not _API_KEY:
-        return True  # dev mode — no key configured
-    provided = (request.headers.get("X-API-Key") or "").strip()
-    return provided == _API_KEY
-
 
 # ---------------------------------------------------------------------------
 # Source attribution helpers
@@ -145,13 +144,15 @@ def _extract_sources(messages: list) -> list:
 async def startup_event():
     global cygeniq_agent
     print("Initializing Cygeniq Agent backend...")
+    # Ensure RBAC users table exists in Supabase
+    await ensure_users_table()
     cygeniq_agent = await init_agent()
     if cygeniq_agent is None:
         print("WARNING: Agent failed to initialize. Check environment variables.")
 
 
 # ---------------------------------------------------------------------------
-# Routes
+# Routes — public
 # ---------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
@@ -168,25 +169,90 @@ async def health():
         "tool_count": agent.get_tool_count(),
         "mcp_servers": agent.MCP_SERVER_COUNT,
         "model": agent.LLM_MODEL,
-        "auth_enabled": bool(_API_KEY),
+        "rbac_enabled": True,
     }
 
 
+# ---------------------------------------------------------------------------
+# Routes — Auth
+# ---------------------------------------------------------------------------
+@app.post("/auth/login")
+@limiter.limit("10/minute")
+async def login(request: Request):
+    """
+    POST /auth/login  { "username": "...", "password": "..." }
+    Returns a signed JWT on success.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return JSONResponse(status_code=400, content={"error": "Invalid JSON body."})
+
+    username = (body.get("username") or "").strip()
+    password = body.get("password") or ""
+
+    if not username or not password:
+        return JSONResponse(status_code=400, content={"error": "username and password are required."})
+
+    user = await authenticate_user(username, password)
+    if not user:
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Invalid username or password."},
+        )
+
+    token = create_access_token(user.username, user.role)
+    role_meta = ROLE_LABELS.get(user.role, {})
+    starter_cards = ROLE_STARTER_CARDS.get(user.role, [])
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "username": user.username,
+        "role": user.role,
+        "role_icon": role_meta.get("icon", "👤"),
+        "role_color": role_meta.get("color", "#888"),
+        "role_bg": role_meta.get("bg", "rgba(0,0,0,0.1)"),
+        "starter_cards": starter_cards,
+    }
+
+
+@app.get("/auth/me")
+async def auth_me(request: Request):
+    """GET /auth/me — returns current user info from JWT (no DB call)."""
+    try:
+        user: RoleUser = get_current_user(request)
+    except Exception as e:
+        return JSONResponse(status_code=401, content={"error": str(e)})
+
+    role_meta = ROLE_LABELS.get(user.role, {})
+    starter_cards = ROLE_STARTER_CARDS.get(user.role, [])
+    denied = list(ROLE_DENIED_TOOLS.get(user.role, set()))
+
+    return {
+        "username": user.username,
+        "role": user.role,
+        "role_icon": role_meta.get("icon", "👤"),
+        "role_color": role_meta.get("color", "#888"),
+        "role_bg": role_meta.get("bg", "rgba(0,0,0,0.1)"),
+        "starter_cards": starter_cards,
+        "denied_tools": denied,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Routes — Chat (protected + RBAC enforced)
+# ---------------------------------------------------------------------------
 @app.post("/chat")
 @limiter.limit("10/minute")
 async def chat_endpoint(request: Request):
-    # --- 1. Authentication ---
-    if not _check_auth(request):
-        return JSONResponse(
-            status_code=401,
-            content={"error": "Unauthorized. Provide a valid X-API-Key header."},
-        )
+    # --- 1. JWT Authentication ---
+    try:
+        user: RoleUser = get_current_user(request)
+    except Exception as exc:
+        return JSONResponse(status_code=401, content={"error": str(exc)})
 
-    # --- 2. Agent readiness ---
-    if not cygeniq_agent:
-        return JSONResponse(status_code=503, content={"error": "Agent not ready. Check server logs."})
-
-    # --- 3. Parse & validate input ---
+    # --- 2. Parse & validate input ---
     try:
         body = await request.json()
     except Exception:
@@ -204,14 +270,18 @@ async def chat_endpoint(request: Request):
             content={"error": "Message exceeds maximum allowed length of 10,000 characters."},
         )
 
-    # --- 4. /status shortcut (no LLM call, dynamic counts) ---
+    # --- 3. /status shortcut (no LLM call, dynamic counts) ---
     if user_input.strip().lower() in {"status", "/status"}:
-        auth_badge = (
-            '<span class="status-pill on">🔒 X-API-Key Protected</span>'
-            if _API_KEY
-            else '<span class="status-pill dev">🔓 Dev Mode (No Key)</span>'
+        role_meta = ROLE_LABELS.get(user.role, {})
+        role_badge = (
+            f'<span class="status-pill" style="background:{role_meta.get("bg","")};color:{role_meta.get("color","")}">'
+            f'{role_meta.get("icon","👤")} {user.role.capitalize()}'
+            f'</span>'
         )
-        rate_badge = '<span class="status-pill on">⚡ 10 req/min/IP</span>'
+        denied_tools = ROLE_DENIED_TOOLS.get(user.role, set())
+        denied_list = (
+            ", ".join(sorted(denied_tools)) if denied_tools else "None — full access"
+        )
         tools_available = agent.get_tool_count()
         dashboard_html = f"""
 <div class="system-dashboard-card">
@@ -249,12 +319,12 @@ async def chat_endpoint(request: Request):
       <span class="sdc-val">SQLite Checkpointer (/app/data)</span>
     </div>
     <div class="sdc-metric">
-      <span class="sdc-label">Authentication</span>
-      <span class="sdc-val">{auth_badge}</span>
+      <span class="sdc-label">Signed In As</span>
+      <span class="sdc-val">{role_badge} &nbsp;<code style="opacity:.7">{user.username}</code></span>
     </div>
     <div class="sdc-metric">
-      <span class="sdc-label">Rate Limiter</span>
-      <span class="sdc-val">{rate_badge}</span>
+      <span class="sdc-label">Restricted Tools</span>
+      <span class="sdc-val mono" style="font-size:.75rem;opacity:.8">{denied_list}</span>
     </div>
   </div>
 
@@ -264,7 +334,7 @@ async def chat_endpoint(request: Request):
       <span class="schip db">🗄️ Supabase Postgres</span>
       <span class="schip file">📂 Knowledge Filesystem</span>
       <span class="schip memory">🧠 Persistent Knowledge Graph</span>
-      <span class="schip sp">☁️ SharePoint & OneDrive</span>
+      <span class="schip sp">☁️ SharePoint &amp; OneDrive</span>
       <span class="schip policy">📜 Policy Intelligence</span>
       <span class="schip product">🛡️ Product Intelligence</span>
       <span class="schip grc">⚖️ GRC Regulatory Engine</span>
@@ -274,23 +344,41 @@ async def chat_endpoint(request: Request):
 """
         return {"blocks": [dashboard_html], "sources": [], "source": None}
 
-    # --- 5. Invoke the agent ---
+    # --- 4. Agent readiness check (for LLM queries) ---
+    if not cygeniq_agent:
+        return JSONResponse(status_code=503, content={"error": "Agent is initializing or not ready. Please try again in a few moments."})
+
+    # --- 5. RBAC tool-guard: inject restriction notice into prompt ---
+    denied_tools = ROLE_DENIED_TOOLS.get(user.role, set())
+    rbac_prefix = ""
+    if denied_tools:
+        rbac_prefix = (
+            f"\n\n[RBAC] The current user '{user.username}' has role '{user.role}'. "
+            f"The following tools are FORBIDDEN for this session and must NOT be called: "
+            f"{', '.join(sorted(denied_tools))}. "
+            f"If the user requests something that requires a forbidden tool, politely explain "
+            f"that their role does not permit access to that capability.\n\n"
+        )
+
+    # --- 6. Invoke the agent ---
     try:
         config = {"configurable": {"thread_id": session_id}}
+        augmented_input = rbac_prefix + user_input if rbac_prefix else user_input
         result = await cygeniq_agent.ainvoke(
-            {"messages": [("user", user_input)]}, config
+            {"messages": [("user", augmented_input)]}, config
         )
 
         messages = result["messages"]
         final_message = messages[-1].content
 
-        # --- 6. Full multi-source attribution ---
-        sources = _extract_sources(messages)
+        # --- 7. Full multi-source attribution (filter out denied tools) ---
+        all_sources = _extract_sources(messages)
+        sources = [s for s in all_sources if is_tool_allowed(user.role, s["tool"])]
 
-        # Backwards-compatible single `source` field: first source (or None)
+        # Backwards-compatible single `source` field
         primary_source = sources[0] if sources else None
 
-        # --- 7. Render markdown → HTML ---
+        # --- 8. Render markdown → HTML ---
         html_message = markdown.markdown(
             final_message,
             extensions=["tables", "fenced_code"],
@@ -298,8 +386,9 @@ async def chat_endpoint(request: Request):
 
         return {
             "blocks":  [html_message],
-            "sources": sources,          # new: full list
-            "source":  primary_source,   # legacy: first source (UI badge)
+            "sources": sources,
+            "source":  primary_source,
+            "user":    user.to_dict(),
         }
 
     except Exception as e:

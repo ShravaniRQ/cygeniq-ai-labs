@@ -22,6 +22,7 @@ qdrant_storage/
 # Local database / Memory checkpoints
 *.db
 cygeniq_memory.db
+data/
 
 # Dummy / mock data
 dummy_sharepoint_docs/

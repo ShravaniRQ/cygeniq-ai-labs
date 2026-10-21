@@ -9,9 +9,16 @@ langchain-openai
 # Web server
 fastapi
 uvicorn
+python-multipart
 
 # Rate limiting
 slowapi
+
+# RBAC / Authentication
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt
+asyncpg
 
 # SharePoint MCP
 msal
