@@ -23,7 +23,7 @@ RUN npx -y @modelcontextprotocol/server-postgres --help || true
 RUN npx -y @modelcontextprotocol/server-memory --help || true
 
 # Copy the rest of the application code
-COPY agent.py server.py sharepoint_mcp.py policy_mcp.py product_mcp.py grc_mcp.py ./
+COPY agent.py server.py auth.py sharepoint_mcp.py policy_mcp.py product_mcp.py grc_mcp.py ./
 COPY static/ ./static/
 COPY knowledge/ ./knowledge/
 
