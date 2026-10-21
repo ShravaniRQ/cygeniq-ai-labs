@@ -29,9 +29,54 @@ def get_tool_count() -> int:
 DATA_DIR = pathlib.Path(os.getenv("DATA_DIR", "./data"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 SQLITE_PATH = str(DATA_DIR / "cygeniq_memory.db")
+MEMORY_PATH = str((DATA_DIR / "memory.jsonl").resolve())
+
+
+def ensure_default_knowledge_graph():
+    """Seed initial Cygeniq knowledge graph entities if memory.jsonl is empty or missing."""
+    p = DATA_DIR / "memory.jsonl"
+    if not p.exists() or p.stat().st_size == 0:
+        default_items = [
+            {"type": "entity", "name": "Cygeniq AI Labs", "entityType": "Organization", "observations": [
+                "Leading enterprise AI risk, governance, and autonomous cybersecurity lab.",
+                "Builds specialized security systems for enterprise LLMs, RAG pipelines, and agentic workflows."
+            ]},
+            {"type": "entity", "name": "HexaShield AI", "entityType": "Product", "observations": [
+                "Flagship AI Red Teaming and runtime defense platform.",
+                "Adversarial security testing against prompt injection, jailbreaks, data exfiltration, and model evasion."
+            ]},
+            {"type": "entity", "name": "GRCortex", "entityType": "Product", "observations": [
+                "Automated AI regulatory compliance and governance engine.",
+                "Maps enterprise controls to RBI Cybersecurity Framework, SEBI CSCRF, NIST AI RMF 1.0, ISO 42001, and DPDP Act 2023."
+            ]},
+            {"type": "entity", "name": "CyberTix AI", "entityType": "Product", "observations": [
+                "Autonomous AI SecOps platform for tier-1 incident triage and security ticket resolution.",
+                "Accelerates Mean Time to Remediate (MTTR) across SIEM, EDR, and ITSM."
+            ]},
+            {"type": "entity", "name": "RBI Cybersecurity Framework", "entityType": "ComplianceFramework", "observations": [
+                "Reserve Bank of India guidelines for baseline cyber security and operational resilience in banks and NBFCs."
+            ]},
+            {"type": "entity", "name": "DPDP Act 2023", "entityType": "ComplianceFramework", "observations": [
+                "Digital Personal Data Protection Act governing processing, user consent, and security safeguards for digital personal data in India."
+            ]},
+            {"type": "relation", "from": "Cygeniq AI Labs", "to": "HexaShield AI", "relationType": "develops"},
+            {"type": "relation", "from": "Cygeniq AI Labs", "to": "GRCortex", "relationType": "develops"},
+            {"type": "relation", "from": "Cygeniq AI Labs", "to": "CyberTix AI", "relationType": "develops"},
+            {"type": "relation", "from": "GRCortex", "to": "RBI Cybersecurity Framework", "relationType": "evaluates_compliance"},
+            {"type": "relation", "from": "GRCortex", "to": "DPDP Act 2023", "relationType": "evaluates_compliance"},
+            {"type": "relation", "from": "HexaShield AI", "to": "Cygeniq AI Labs", "relationType": "flagship_security_platform"}
+        ]
+        import json
+        with open(p, "w", encoding="utf-8") as f:
+            for item in default_items:
+                f.write(json.dumps(item) + "\n")
+        print(f"[agent] Seeded initial Cygeniq knowledge graph at {p}")
+
 
 async def init_agent():
     print("Connecting to official MCP servers via npx...")
+    ensure_default_knowledge_graph()
+    os.environ["MEMORY_FILE_PATH"] = MEMORY_PATH
     
     # Check for required API key
     if not os.getenv("GROQ_API_KEY"):
@@ -58,6 +103,7 @@ async def init_agent():
             "memory": {
                 "command": "npx",
                 "args": ["-y", "@modelcontextprotocol/server-memory"],
+                "env": dict(os.environ, MEMORY_FILE_PATH=MEMORY_PATH),
                 "transport": "stdio"
             },
             "sharepoint": {
