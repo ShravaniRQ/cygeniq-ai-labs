@@ -1,7 +1,10 @@
-# Use official Python 3.11 slim image as base
+# ============================================================
+# Cygeniq AI Labs — Production Dockerfile
+# Python 3.11 + Node.js 20 (for npx MCP servers)
+# ============================================================
 FROM python:3.11-slim
 
-# Install Node.js 20 (required for npx MCP servers)
+# Install Node.js 20 (required for npx MCP servers: filesystem, postgres, memory)
 RUN apt-get update && apt-get install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
@@ -10,28 +13,28 @@ RUN apt-get update && apt-get install -y curl && \
 # Set working directory
 WORKDIR /app
 
-# Copy and install Python dependencies first (for better layer caching)
+# Copy and install Python dependencies (separate layer for caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install additional deps needed by sharepoint_mcp.py
 RUN pip install --no-cache-dir msal python-docx
 
-# Pre-install the npx MCP packages so they don't need to download at runtime
+# Pre-cache the npx MCP packages so they don't download at runtime
 RUN npx -y @modelcontextprotocol/server-filesystem --help || true
 RUN npx -y @modelcontextprotocol/server-postgres --help || true
 RUN npx -y @modelcontextprotocol/server-memory --help || true
 
-# Copy the rest of the application code
-COPY agent.py server.py auth.py sharepoint_mcp.py policy_mcp.py product_mcp.py grc_mcp.py ./
+# Copy all application source files
+COPY agent.py server.py auth.py ./
+COPY sharepoint_mcp.py policy_mcp.py product_mcp.py grc_mcp.py gmail_mcp.py ./
+COPY security_simulator.py security_checks.py security_db.py ./
+
+# Copy static assets and knowledge base
 COPY static/ ./static/
 COPY knowledge/ ./knowledge/
 
-# Create and declare the persistent data directory.
-# Mount a named volume here in production to persist the SQLite memory DB
-# across container restarts and redeploys.
-#   docker run -v cygeniq_data:/app/data ...
-#   render.yaml: disk mount at /app/data
+# Create and declare the persistent data directory
 RUN mkdir -p /app/data
 ENV DATA_DIR=/app/data
 VOLUME ["/app/data"]
@@ -39,5 +42,5 @@ VOLUME ["/app/data"]
 # Expose the port Uvicorn will run on
 EXPOSE 8000
 
-# Start the FastAPI server
-CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the FastAPI server (dynamic PORT for Render, defaults to 8000)
+CMD sh -c "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1 --timeout-keep-alive 120"

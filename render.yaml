@@ -20,27 +20,24 @@ services:
       - key: AZURE_CLIENT_SECRET
         sync: false   # Azure App Registration Client Secret
 
-      # -----------------------------------------------------------------------
-      # Authentication: protect the /chat endpoint.
-      # When set, every request must include the header:  X-API-Key: <value>
-      # When left blank the server runs in dev mode (no auth).
-      # -----------------------------------------------------------------------
+      - key: GMAIL_EMAIL
+        sync: false   # Gmail account for Gmail MCP
+
+      - key: GMAIL_APP_PASSWORD
+        sync: false   # Google App Password (16 characters)
+
+      - key: SECURITY_AUDIT_DB
+        value: /app/data/security_simulator.db
+
+      # Authentication: protect the /chat endpoint
       - key: CYGENIQ_API_KEY
         sync: false   # Internal API key for /chat — leave blank for open dev access
 
-      # -----------------------------------------------------------------------
-      # Persistent memory storage.
-      # On Render free tier, use a Render Disk mounted at /app/data.
-      # -----------------------------------------------------------------------
+      - key: JWT_SECRET_KEY
+        sync: false   # Secret key for RBAC JWT generation
+
+      # Persistent memory storage
       - key: DATA_DIR
-        value: /app/data   # Must match the Render Disk mount path
+        value: /app/data
 
-    # Health check used by Render to confirm the service is alive
     healthCheckPath: /health
-
-    # Render Disk for persistent SQLite memory.
-    # Uncomment and configure when upgrading from the free plan.
-    # disk:
-    #   name: cygeniq-memory
-    #   mountPath: /app/data
-    #   sizeGB: 1

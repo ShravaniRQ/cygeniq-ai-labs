@@ -1,7 +1,10 @@
-# Core LangGraph agent
+# Core LangGraph & LangChain agent
 langgraph
 langgraph-checkpoint-sqlite
 aiosqlite
+langchain
+langchain-core
+langchain-community
 langchain-mcp-adapters==0.1.10
 mcp>=1.6.0,<2.0.0
 langchain-openai

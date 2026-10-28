@@ -4,7 +4,7 @@ import html as html_lib
 import markdown
 import uvicorn
 from fastapi import FastAPI, Request, Depends
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 try:
@@ -31,7 +31,7 @@ except ImportError:
     limiter = _DummyLimiter()
 
 import agent
-from agent import init_agent
+from agent import init_agent, LLM_GUARDRAILS_DISABLED
 from auth import (
     authenticate_user,
     create_access_token,
@@ -43,19 +43,23 @@ from auth import (
     ROLE_STARTER_CARDS,
     ROLE_DENIED_TOOLS,
 )
+from security_simulator import run_security_simulation_stream, cancel_active_test, get_available_mcp_tools
+import security_db
 
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Cygeniq AI Labs Agent", version="2.0.0")
+
 if HAS_SLOWAPI:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Global agent reference
+# Global agent references (primary production agent and adversarial testing agent)
 cygeniq_agent = None
+cygeniq_adversarial_agent = None
 
 # ---------------------------------------------------------------------------
 # Source attribution helpers
@@ -100,6 +104,11 @@ _TOOL_SOURCES = {
     "map_control_to_product_evidence":("grc",        "GRC & Regulatory Intelligence",  "Control Evidence"),
     "evaluate_compliance_gap":        ("grc",        "GRC & Regulatory Intelligence",  "Gap Analysis"),
     "generate_compliance_checklist":  ("grc",        "GRC & Regulatory Intelligence",  "Audit Checklist"),
+    # Gmail MCP
+    "search_emails":                  ("mail",       "Gmail (Inbox)",                  "Gmail Search"),
+    "read_email":                     ("mail",       "Gmail (Inbox)",                  "Gmail Email Read"),
+    "draft_email":                    ("mail",       "Gmail (Draft)",                  "Gmail Draft"),
+    "send_email":                     ("mail",       "Gmail (Outbox)",                 "Gmail Send Confirmation"),
 }
 
 
@@ -112,7 +121,7 @@ def _extract_sources(messages: list) -> list:
     seen: set = set()
     sources: list = []
     for msg in messages:
-        if msg.type != "tool":
+        if getattr(msg, "type", None) != "tool":
             continue
         name = getattr(msg, "name", None)
         if not name or name in seen:
@@ -142,11 +151,21 @@ def _extract_sources(messages: list) -> list:
 # ---------------------------------------------------------------------------
 @app.on_event("startup")
 async def startup_event():
-    global cygeniq_agent
+    global cygeniq_agent, cygeniq_adversarial_agent
     print("Initializing Cygeniq Agent backend...")
     # Ensure RBAC users table exists in Supabase
-    await ensure_users_table()
-    cygeniq_agent = await init_agent()
+    try:
+        await ensure_users_table()
+    except Exception as e:
+        print(f"Warning: ensure_users_table: {e}")
+
+    res = await init_agent()
+    if isinstance(res, tuple):
+        cygeniq_agent, cygeniq_adversarial_agent = res
+    else:
+        cygeniq_agent = res
+        cygeniq_adversarial_agent = res
+
     if cygeniq_agent is None:
         print("WARNING: Agent failed to initialize. Check environment variables.")
 
@@ -246,13 +265,15 @@ async def auth_me(request: Request):
 @app.post("/chat")
 @limiter.limit("10/minute")
 async def chat_endpoint(request: Request):
-    # --- 1. JWT Authentication ---
+    # Optional JWT Authentication for Chat (supports both authenticated session & open testing)
+    user = None
     try:
-        user: RoleUser = get_current_user(request)
-    except Exception as exc:
-        return JSONResponse(status_code=401, content={"error": str(exc)})
+        user = get_current_user(request)
+    except Exception:
+        # Fall back to default admin role if not signed in via UI
+        user = RoleUser(username="admin", role="admin")
 
-    # --- 2. Parse & validate input ---
+    # Parse & validate input
     try:
         body = await request.json()
     except Exception:
@@ -270,7 +291,7 @@ async def chat_endpoint(request: Request):
             content={"error": "Message exceeds maximum allowed length of 10,000 characters."},
         )
 
-    # --- 3. /status shortcut (no LLM call, dynamic counts) ---
+    # /status shortcut (no LLM call, dynamic counts)
     if user_input.strip().lower() in {"status", "/status"}:
         role_meta = ROLE_LABELS.get(user.role, {})
         role_badge = (
@@ -332,23 +353,24 @@ async def chat_endpoint(request: Request):
     <span class="sdc-footer-label">Active MCP Subsystems:</span>
     <div class="sdc-chips">
       <span class="schip db">🗄️ Supabase Postgres</span>
-      <span class="schip file">📂 Knowledge Filesystem</span>
+      <span class="schip file">📁 Knowledge Filesystem</span>
       <span class="schip memory">🧠 Persistent Knowledge Graph</span>
       <span class="schip sp">☁️ SharePoint &amp; OneDrive</span>
       <span class="schip policy">📜 Policy Intelligence</span>
       <span class="schip product">🛡️ Product Intelligence</span>
       <span class="schip grc">⚖️ GRC Regulatory Engine</span>
+      <span class="schip mail">✉️ Gmail Integration</span>
     </div>
   </div>
 </div>
 """
         return {"blocks": [dashboard_html], "sources": [], "source": None}
 
-    # --- 4. Agent readiness check (for LLM queries) ---
+    # Agent readiness check
     if not cygeniq_agent:
         return JSONResponse(status_code=503, content={"error": "Agent is initializing or not ready. Please try again in a few moments."})
 
-    # --- 5. RBAC tool-guard: inject restriction notice into prompt ---
+    # RBAC tool-guard: inject restriction notice into prompt
     denied_tools = ROLE_DENIED_TOOLS.get(user.role, set())
     rbac_prefix = ""
     if denied_tools:
@@ -360,7 +382,7 @@ async def chat_endpoint(request: Request):
             f"that their role does not permit access to that capability.\n\n"
         )
 
-    # --- 6. Invoke the agent ---
+    # Invoke the agent
     try:
         config = {"configurable": {"thread_id": session_id}}
         augmented_input = rbac_prefix + user_input if rbac_prefix else user_input
@@ -371,14 +393,14 @@ async def chat_endpoint(request: Request):
         messages = result["messages"]
         final_message = messages[-1].content
 
-        # --- 7. Full multi-source attribution (filter out denied tools) ---
+        # Full multi-source attribution (filter out denied tools)
         all_sources = _extract_sources(messages)
         sources = [s for s in all_sources if is_tool_allowed(user.role, s["tool"])]
 
         # Backwards-compatible single `source` field
         primary_source = sources[0] if sources else None
 
-        # --- 8. Render markdown → HTML ---
+        # Render markdown to HTML
         html_message = markdown.markdown(
             final_message,
             extensions=["tables", "fenced_code"],
@@ -392,8 +414,117 @@ async def chat_endpoint(request: Request):
         }
 
     except Exception as e:
-        print(f"[ERROR] chat_endpoint: {e}")
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        err_msg = str(e)
+        print(f"[ERROR] chat_endpoint: {err_msg}")
+        if "429" in err_msg or "rate_limit" in err_msg.lower():
+            err_msg = "Groq LLM daily token rate limit reached (429). Quota resets shortly. You can use the AI Security Simulator in Safe Simulation mode to run offline risk analysis and test guardrails."
+        return JSONResponse(status_code=500, content={"error": err_msg})
+
+
+# ===========================================================================
+# AI Security Simulator Endpoints
+# ===========================================================================
+
+@app.get("/testing/status")
+async def testing_status():
+    """Returns the current security testing mode state."""
+    return {
+        "llm_guardrails_disabled": LLM_GUARDRAILS_DISABLED,
+        "agent_mode": "SECURITY_TESTING_MODE" if LLM_GUARDRAILS_DISABLED else "PRODUCTION",
+        "note": "AI Security Simulator is ready with 13 check categories and evidence-based verdicts."
+    }
+
+@app.post("/simulator/stream")
+async def simulator_stream(request: Request):
+    """
+    Accepts a test request and streams live real-time Server-Sent Events (SSE).
+    """
+    body = await request.json()
+    prompt = body.get("prompt")
+    if not prompt or not prompt.strip():
+        return JSONResponse(status_code=400, content={"error": "Prompt is required for security testing."})
+
+    execution_mode = body.get("execution_mode", "safe_simulation")
+    categories = body.get("categories")
+    target_tools = body.get("target_tools")
+    disable_llm_guardrails = bool(
+        LLM_GUARDRAILS_DISABLED or
+        body.get("disable_llm_guardrails", False) or
+        execution_mode in ["adversarial_testing", "adversarial_test", "controlled_testing_relaxed"]
+    )
+    target_agent = cygeniq_adversarial_agent if (disable_llm_guardrails and cygeniq_adversarial_agent) else cygeniq_agent
+
+    return StreamingResponse(
+        run_security_simulation_stream(
+            prompt=prompt,
+            execution_mode=execution_mode,
+            categories_override=categories,
+            target_tools=target_tools,
+            cygeniq_agent=target_agent,
+            disable_llm_guardrails=disable_llm_guardrails
+        ),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+@app.post("/simulator/stop")
+async def simulator_stop(request: Request):
+    """Cancels a currently executing security simulation stream."""
+    body = await request.json()
+    test_id = body.get("test_id")
+    if not test_id:
+        return JSONResponse(status_code=400, content={"error": "test_id is required."})
+    success = cancel_active_test(test_id)
+    return {"success": success, "test_id": test_id}
+
+@app.get("/simulator/history")
+async def simulator_history():
+    """Returns list of past security test runs."""
+    return security_db.list_test_history()
+
+@app.get("/simulator/report/{test_id}")
+async def simulator_report(test_id: str):
+    """Returns full structured report for a given test ID."""
+    report = security_db.get_test_run(test_id)
+    if not report:
+        return JSONResponse(status_code=404, content={"error": f"Report '{test_id}' not found."})
+    return report
+
+@app.get("/simulator/export/{test_id}")
+async def simulator_export(test_id: str, format: str = "json"):
+    """Exports test report as JSON or CSV."""
+    if format.lower() == "csv":
+        csv_data = security_db.export_report_csv(test_id)
+        if not csv_data:
+            return JSONResponse(status_code=404, content={"error": f"Report '{test_id}' not found."})
+        return Response(
+            content=csv_data,
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=security_audit_{test_id}.csv"}
+        )
+    else:
+        report = security_db.get_test_run(test_id)
+        if not report:
+            return JSONResponse(status_code=404, content={"error": f"Report '{test_id}' not found."})
+        return JSONResponse(
+            content=report,
+            headers={"Content-Disposition": f"attachment; filename=security_audit_{test_id}.json"}
+        )
+
+@app.get("/simulator/tools")
+async def simulator_tools():
+    """Lists available MCP tools and security capabilities dynamically."""
+    return get_available_mcp_tools()
+
+@app.post("/simulator/clear")
+async def simulator_clear():
+    """Clears all stored test runs and audit history."""
+    security_db.clear_test_history()
+    return {"success": True, "message": "Test history cleared."}
 
 
 # ---------------------------------------------------------------------------

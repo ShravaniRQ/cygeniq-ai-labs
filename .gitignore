@@ -3,26 +3,51 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Environment variables
+# Environment variables & secrets
 .env
+.env.local
+.env.*.local
+*.pem
+*.key
 
 # Virtual environment
 venv/
 env/
 ENV/
+.venv/
+
+# Local databases, WAL journals & persistent data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+cygeniq_memory.db
+data/
+
+# Security test audit export outputs
+security_audit_*.json
+security_audit_*.csv
 
 # Vector DB storage (if local)
 chroma_db/
 qdrant_storage/
 
-# IDE files
+# IDE & editor files
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# Local database / Memory checkpoints
-*.db
-cygeniq_memory.db
-data/
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
 
 # Dummy / mock data
 dummy_sharepoint_docs/
