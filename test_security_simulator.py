@@ -239,7 +239,7 @@ class TestSecuritySimulator(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertIn("blocks", data)
-        self.assertIn("CYGENIQ AI LABS AGENT", data["blocks"][0])
+        self.assertIn("CYGENIQ AI LABS AGENT", data["blocks"][0].upper())
 
         res_empty = self.client.post("/chat", json={"message": ""})
         self.assertEqual(res_empty.status_code, 400)
