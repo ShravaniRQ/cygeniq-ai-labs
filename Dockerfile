@@ -15,10 +15,8 @@ WORKDIR /app
 
 # Copy and install Python dependencies (separate layer for caching)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Install additional deps needed by sharepoint_mcp.py
-RUN pip install --no-cache-dir msal python-docx
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Pre-cache the npx MCP packages so they don't download at runtime
 RUN npx -y @modelcontextprotocol/server-filesystem --help || true
