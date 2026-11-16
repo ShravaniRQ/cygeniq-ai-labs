@@ -249,10 +249,12 @@ async def ensure_users_table() -> None:
         print("[auth] Auth will fall back to env-var user registry.")
 
 
+DEFAULT_FALLBACK_USERS = "admin:CygeniqAdmin2024!:admin,analyst1:Analyst2024!:analyst,presales1:Presales2024!:presales"
+
 async def authenticate_user(username: str, password: str) -> Optional[RoleUser]:
     """
     Verify username + password against cygeniq_users table.
-    Falls back to CYGENIQ_USERS env var if not in DB or DB is unavailable.
+    Falls back to CYGENIQ_USERS env var (or built-in default users) if not in DB or DB is unavailable.
     Returns RoleUser on success, None on failure.
     """
     # --- Primary: Supabase DB ---
@@ -274,9 +276,9 @@ async def authenticate_user(username: str, password: str) -> Optional[RoleUser]:
     except Exception as e:
         print(f"[auth] DB auth failed ({e}), falling back to ENV registry.")
 
-    # --- Fallback: environment variable registry ---
+    # --- Fallback: environment variable registry or hardcoded default seed ---
     # Format: CYGENIQ_USERS=admin:password:admin,bob:pass123:analyst
-    registry_str = os.getenv("CYGENIQ_USERS", "")
+    registry_str = os.getenv("CYGENIQ_USERS", "").strip() or DEFAULT_FALLBACK_USERS
     if registry_str:
         for entry in registry_str.split(","):
             parts = entry.strip().split(":")
